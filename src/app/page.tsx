@@ -53,6 +53,7 @@ type TelaAdmin =
   | "vistorias"
   | "empresas"
   | "colaboradores"
+  | "dispositivos"
   | "relatorios"
   | "mapa";
 
@@ -153,6 +154,7 @@ function tituloDaTela(tela: TelaAdmin) {
   if (tela === "vistorias") return "Vistorias";
   if (tela === "empresas") return "Empresas";
   if (tela === "colaboradores") return "Colaboradores";
+  if (tela === "dispositivos") return "Dispositivos";
   if (tela === "relatorios") return "Relatórios";
   return "Mapa";
 }
@@ -172,6 +174,10 @@ function descricaoDaTela(tela: TelaAdmin) {
 
   if (tela === "colaboradores") {
     return "Área preparada para produtividade e gestão de usuários.";
+  }
+
+  if (tela === "dispositivos") {
+    return "Autorize, bloqueie e acompanhe os celulares que podem usar o aplicativo SafeScan.";
   }
 
   if (tela === "relatorios") {
@@ -501,14 +507,19 @@ export default function Home() {
   const [respostas, setRespostas] = useState<LinhaBanco[]>([]);
   const [fotos, setFotos] = useState<LinhaBanco[]>([]);
   const [colaboradores, setColaboradores] = useState<LinhaBanco[]>([]);
+  const [dispositivos, setDispositivos] = useState<LinhaBanco[]>([]);
 
   const [carregandoColaboradores, setCarregandoColaboradores] = useState(false);
+  const [carregandoDispositivos, setCarregandoDispositivos] = useState(false);
+  const [atualizandoDispositivoId, setAtualizandoDispositivoId] = useState<string | null>(null);
   const [salvandoColaborador, setSalvandoColaborador] = useState(false);
 
   const [nomeColaborador, setNomeColaborador] = useState("");
   const [emailColaborador, setEmailColaborador] = useState("");
   const [senhaColaborador, setSenhaColaborador] = useState("");
   const [buscaColaborador, setBuscaColaborador] = useState("");
+  const [buscaDispositivo, setBuscaDispositivo] = useState("");
+  const [filtroStatusDispositivo, setFiltroStatusDispositivo] = useState("TODOS");
 
   const [vistoriaSelecionadaId, setVistoriaSelecionadaId] = useState<
     string | null
@@ -664,6 +675,110 @@ export default function Home() {
     }
   }
 
+  async function carregarDispositivos() {
+    setCarregandoDispositivos(true);
+    setErro("");
+
+    try {
+      const token = await obterTokenDeAcesso();
+
+      const resposta = await fetch("/api/admin/listar-dispositivos", {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const resultado = await resposta.json();
+
+      if (!resposta.ok) {
+        throw new Error(resultado?.erro || "Erro ao carregar dispositivos.");
+      }
+
+      setDispositivos(resultado.dispositivos ?? []);
+    } catch (error) {
+      setErro(
+        error instanceof Error
+          ? error.message
+          : "Erro inesperado ao carregar dispositivos."
+      );
+    } finally {
+      setCarregandoDispositivos(false);
+    }
+  }
+
+  async function atualizarStatusDispositivo(
+    id: string,
+    status: "PENDENTE" | "APROVADO" | "BLOQUEADO"
+  ) {
+    setErro("");
+    setAviso("");
+    setAtualizandoDispositivoId(id);
+
+    try {
+      const token = await obterTokenDeAcesso();
+
+      const resposta = await fetch("/api/admin/atualizar-dispositivo", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ id, status }),
+      });
+
+      const resultado = await resposta.json();
+
+      if (!resposta.ok) {
+        throw new Error(resultado?.erro || "Erro ao atualizar dispositivo.");
+      }
+
+      setAviso(`Dispositivo atualizado para ${status}.`);
+      await carregarDispositivos();
+    } catch (error) {
+      setErro(
+        error instanceof Error
+          ? error.message
+          : "Erro inesperado ao atualizar dispositivo."
+      );
+    } finally {
+      setAtualizandoDispositivoId(null);
+    }
+  }
+
+  function formatarDataCampo(valor: unknown) {
+    if (!valor) return "Não informado";
+
+    const data = new Date(String(valor));
+
+    if (Number.isNaN(data.getTime())) return "Não informado";
+
+    return formatarData(data);
+  }
+
+  function statusDispositivo(valor: unknown) {
+    const status = normalizarTexto(valor || "PENDENTE");
+
+    if (status === "APROVADO") return "APROVADO";
+    if (status === "BLOQUEADO") return "BLOQUEADO";
+
+    return "PENDENTE";
+  }
+
+  function classeBadgeDispositivo(status: unknown) {
+    const normalizado = statusDispositivo(status);
+
+    if (normalizado === "APROVADO") {
+      return "bg-green-100 text-green-800 hover:bg-green-100";
+    }
+
+    if (normalizado === "BLOQUEADO") {
+      return "bg-red-100 text-red-900 hover:bg-red-100";
+    }
+
+    return "bg-yellow-100 text-yellow-900 hover:bg-yellow-100";
+  }
+
   function gerarSenhaTemporaria() {
     const numero = Math.floor(100000 + Math.random() * 900000);
     setSenhaColaborador(`Safe${numero}!`);
@@ -780,12 +895,15 @@ export default function Home() {
     setRespostas([]);
     setFotos([]);
     setColaboradores([]);
+    setDispositivos([]);
     setEmail("");
     setSenha("");
     setNomeColaborador("");
     setEmailColaborador("");
     setSenhaColaborador("");
     setBuscaColaborador("");
+    setBuscaDispositivo("");
+    setFiltroStatusDispositivo("TODOS");
     setTelaAtiva("dashboard");
     setVistoriaSelecionadaId(null);
   }
@@ -836,6 +954,7 @@ export default function Home() {
   useEffect(() => {
     if (sessionEmail) {
       carregarColaboradores();
+      carregarDispositivos();
     }
   }, [sessionEmail]);
 
@@ -1292,6 +1411,39 @@ export default function Home() {
         return dataB - dataA;
       });
   }, [colaboradores, buscaColaborador]);
+
+  const dispositivosFiltrados = useMemo(() => {
+    const busca = normalizarTexto(buscaDispositivo);
+
+    return dispositivos
+      .filter((dispositivo) => {
+        const status = statusDispositivo(dispositivo.status);
+
+        if (filtroStatusDispositivo !== "TODOS" && status !== filtroStatusDispositivo) {
+          return false;
+        }
+
+        if (!busca) return true;
+
+        const texto = normalizarTexto(
+          [
+            dispositivo.usuario_email,
+            dispositivo.dispositivo_nome,
+            dispositivo.dispositivo_id,
+            dispositivo.plataforma,
+            dispositivo.status,
+            dispositivo.usuario_id,
+          ].join(" ")
+        );
+
+        return texto.includes(busca);
+      })
+      .sort((a, b) => {
+        const dataA = pegarData(a)?.getTime() ?? 0;
+        const dataB = pegarData(b)?.getTime() ?? 0;
+        return dataB - dataA;
+      });
+  }, [dispositivos, buscaDispositivo, filtroStatusDispositivo]);
 
   function obterEmpresaRelatorio(vistoria: LinhaBanco) {
     return String(
@@ -2417,6 +2569,11 @@ export default function Home() {
       id: "colaboradores" as TelaAdmin,
       label: "Colaboradores",
       icon: Users,
+    },
+    {
+      id: "dispositivos" as TelaAdmin,
+      label: "Dispositivos",
+      icon: ShieldCheck,
     },
     {
       id: "relatorios" as TelaAdmin,
@@ -3619,6 +3776,231 @@ export default function Home() {
     );
   }
 
+  function renderizarDispositivos() {
+    return (
+      <div className="space-y-4">
+        {erro && (
+          <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm font-semibold text-red-800">
+            {erro}
+          </div>
+        )}
+
+        {aviso && (
+          <div className="rounded-xl border border-green-200 bg-green-50 p-4 text-sm font-semibold text-green-800">
+            {aviso}
+          </div>
+        )}
+
+        <section className="grid gap-4 md:grid-cols-3">
+          <Card className="rounded-2xl border border-zinc-200 bg-white shadow-sm">
+            <CardContent className="p-5">
+              <p className="text-xs font-black uppercase tracking-[0.18em] text-zinc-500">
+                Pendentes
+              </p>
+              <p className="mt-2 text-3xl font-black text-yellow-700">
+                {formatarNumero(dispositivos.filter((item) => statusDispositivo(item.status) === "PENDENTE").length)}
+              </p>
+              <p className="text-xs font-semibold text-zinc-500">
+                aguardando autorização
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="rounded-2xl border border-zinc-200 bg-white shadow-sm">
+            <CardContent className="p-5">
+              <p className="text-xs font-black uppercase tracking-[0.18em] text-zinc-500">
+                Aprovados
+              </p>
+              <p className="mt-2 text-3xl font-black text-green-700">
+                {formatarNumero(dispositivos.filter((item) => statusDispositivo(item.status) === "APROVADO").length)}
+              </p>
+              <p className="text-xs font-semibold text-zinc-500">
+                liberados para usar o app
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="rounded-2xl border border-zinc-200 bg-white shadow-sm">
+            <CardContent className="p-5">
+              <p className="text-xs font-black uppercase tracking-[0.18em] text-zinc-500">
+                Bloqueados
+              </p>
+              <p className="mt-2 text-3xl font-black text-red-800">
+                {formatarNumero(dispositivos.filter((item) => statusDispositivo(item.status) === "BLOQUEADO").length)}
+              </p>
+              <p className="text-xs font-semibold text-zinc-500">
+                impedidos de acessar
+              </p>
+            </CardContent>
+          </Card>
+        </section>
+
+        <Card className="rounded-xl border border-zinc-200 bg-white shadow-sm">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-lg font-black text-zinc-800">
+              <ShieldCheck className="h-5 w-5 text-red-900" />
+              Dispositivos autorizados
+            </CardTitle>
+            <p className="text-sm text-zinc-500">
+              Aprove ou bloqueie os celulares que solicitaram acesso ao aplicativo SafeScan.
+            </p>
+          </CardHeader>
+
+          <CardContent className="space-y-4">
+            <div className="grid gap-3 md:grid-cols-[1fr_220px_auto]">
+              <div>
+                <label className="text-xs font-bold uppercase tracking-[0.16em] text-zinc-500">
+                  Buscar
+                </label>
+                <Input
+                  value={buscaDispositivo}
+                  onChange={(event) => setBuscaDispositivo(event.target.value)}
+                  placeholder="E-mail, aparelho, ID ou plataforma"
+                  className="mt-2 h-10 rounded-xl"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-bold uppercase tracking-[0.16em] text-zinc-500">
+                  Status
+                </label>
+                <select
+                  value={filtroStatusDispositivo}
+                  onChange={(event) => setFiltroStatusDispositivo(event.target.value)}
+                  className="mt-2 h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm"
+                >
+                  <option value="TODOS">Todos</option>
+                  <option value="PENDENTE">Pendentes</option>
+                  <option value="APROVADO">Aprovados</option>
+                  <option value="BLOQUEADO">Bloqueados</option>
+                </select>
+              </div>
+
+              <div className="flex items-end">
+                <Button
+                  variant="outline"
+                  onClick={carregarDispositivos}
+                  disabled={carregandoDispositivos}
+                  className="h-10 rounded-xl border-red-200 font-bold text-red-900"
+                >
+                  {carregandoDispositivos ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : null}
+                  Atualizar
+                </Button>
+              </div>
+            </div>
+
+            {carregandoDispositivos ? (
+              <div className="flex items-center gap-3 rounded-xl bg-zinc-50 p-5 text-sm font-bold text-zinc-600">
+                <Loader2 className="h-4 w-4 animate-spin text-red-900" />
+                Carregando dispositivos...
+              </div>
+            ) : dispositivosFiltrados.length === 0 ? (
+              <div className="rounded-xl bg-zinc-50 p-5 text-sm font-semibold text-zinc-500">
+                Nenhum dispositivo encontrado. Quando o aplicativo pedir autorização, ele aparecerá aqui.
+              </div>
+            ) : (
+              <div className="grid gap-3">
+                {dispositivosFiltrados.map((dispositivo, index) => {
+                  const id = String(dispositivo.id ?? "");
+                  const status = statusDispositivo(dispositivo.status);
+                  const carregandoAcao = atualizandoDispositivoId === id;
+
+                  return (
+                    <div
+                      key={id || `${String(dispositivo.dispositivo_id ?? "sem-id")}-${index}`}
+                      className="grid gap-4 rounded-xl border border-zinc-200 bg-zinc-50 p-4 xl:grid-cols-[1.2fr_1.2fr_0.8fr_0.8fr_1.2fr]"
+                    >
+                      <div>
+                        <p className="text-xs font-bold uppercase tracking-[0.18em] text-zinc-500">
+                          Usuário
+                        </p>
+                        <p className="mt-1 break-all font-black text-red-950">
+                          {String(dispositivo.usuario_email ?? "E-mail não informado")}
+                        </p>
+                        <p className="mt-1 break-all text-xs font-semibold text-zinc-500">
+                          {String(dispositivo.usuario_id ?? "")}
+                        </p>
+                      </div>
+
+                      <div>
+                        <p className="text-xs font-bold uppercase tracking-[0.18em] text-zinc-500">
+                          Dispositivo
+                        </p>
+                        <p className="mt-1 font-black text-zinc-900">
+                          {String(dispositivo.dispositivo_nome ?? "Aparelho não informado")}
+                        </p>
+                        <p className="mt-1 break-all text-xs font-semibold text-zinc-500">
+                          {String(dispositivo.dispositivo_id ?? "ID não informado")}
+                        </p>
+                      </div>
+
+                      <div>
+                        <p className="text-xs font-bold uppercase tracking-[0.18em] text-zinc-500">
+                          Plataforma
+                        </p>
+                        <p className="mt-1 font-black text-zinc-900">
+                          {String(dispositivo.plataforma ?? "android")}
+                        </p>
+                      </div>
+
+                      <div>
+                        <p className="text-xs font-bold uppercase tracking-[0.18em] text-zinc-500">
+                          Status
+                        </p>
+                        <Badge className={`mt-1 ${classeBadgeDispositivo(status)}`}>
+                          {status}
+                        </Badge>
+                        <p className="mt-2 text-xs font-medium text-zinc-500">
+                          Criado: {formatarDataCampo(dispositivo.created_at)}
+                        </p>
+                        <p className="text-xs font-medium text-zinc-500">
+                          Último acesso: {formatarDataCampo(dispositivo.ultimo_acesso_em)}
+                        </p>
+                      </div>
+
+                      <div className="flex flex-wrap items-start gap-2 xl:justify-end">
+                        <Button
+                          size="sm"
+                          disabled={carregandoAcao || status === "APROVADO" || !id}
+                          onClick={() => atualizarStatusDispositivo(id, "APROVADO")}
+                          className="rounded-xl bg-green-700 text-white hover:bg-green-800"
+                        >
+                          {carregandoAcao ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                          Aprovar
+                        </Button>
+
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          disabled={carregandoAcao || status === "PENDENTE" || !id}
+                          onClick={() => atualizarStatusDispositivo(id, "PENDENTE")}
+                          className="rounded-xl border-yellow-200 text-yellow-900 hover:bg-yellow-50"
+                        >
+                          Pendente
+                        </Button>
+
+                        <Button
+                          size="sm"
+                          disabled={carregandoAcao || status === "BLOQUEADO" || !id}
+                          onClick={() => atualizarStatusDispositivo(id, "BLOQUEADO")}
+                          className="rounded-xl bg-red-900 text-white hover:bg-red-950"
+                        >
+                          Bloquear
+                        </Button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   function renderizarMapa() {
     const itemSelecionado = mapaSelecionado;
     const vistoriaSelecionadaMapa = itemSelecionado?.vistoria ?? null;
@@ -4095,6 +4477,7 @@ export default function Home() {
     if (telaAtiva === "vistorias") return renderizarVistorias();
     if (telaAtiva === "empresas") return renderizarEmpresas();
     if (telaAtiva === "colaboradores") return renderizarColaboradores();
+    if (telaAtiva === "dispositivos") return renderizarDispositivos();
     if (telaAtiva === "relatorios") return renderizarRelatorios();
     if (telaAtiva === "mapa") return renderizarMapa();
 
