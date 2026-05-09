@@ -52,6 +52,7 @@ type TelaAdmin =
   | "dashboard"
   | "vistorias"
   | "empresas"
+  | "catalogo"
   | "colaboradores"
   | "dispositivos"
   | "relatorios"
@@ -153,6 +154,7 @@ function tituloDaTela(tela: TelaAdmin) {
   if (tela === "dashboard") return "Dashboard Geral";
   if (tela === "vistorias") return "Vistorias";
   if (tela === "empresas") return "Empresas";
+  if (tela === "catalogo") return "Catálogo";
   if (tela === "colaboradores") return "Colaboradores";
   if (tela === "dispositivos") return "Dispositivos";
   if (tela === "relatorios") return "Relatórios";
@@ -170,6 +172,10 @@ function descricaoDaTela(tela: TelaAdmin) {
 
   if (tela === "empresas") {
     return "Resumo executivo por unidade, tipo de equipamento, não conformidades e última vistoria.";
+  }
+
+  if (tela === "catalogo") {
+    return "Cadastro de empresas, áreas, tipos e equipamentos que aparecerão no aplicativo.";
   }
 
   if (tela === "colaboradores") {
@@ -508,12 +514,16 @@ export default function Home() {
   const [fotos, setFotos] = useState<LinhaBanco[]>([]);
   const [colaboradores, setColaboradores] = useState<LinhaBanco[]>([]);
   const [dispositivos, setDispositivos] = useState<LinhaBanco[]>([]);
+  const [catalogo, setCatalogo] = useState<LinhaBanco[]>([]);
 
   const [carregandoColaboradores, setCarregandoColaboradores] = useState(false);
   const [carregandoDispositivos, setCarregandoDispositivos] = useState(false);
+  const [carregandoCatalogo, setCarregandoCatalogo] = useState(false);
   const [atualizandoDispositivoId, setAtualizandoDispositivoId] = useState<string | null>(null);
   const [atualizandoColaboradorId, setAtualizandoColaboradorId] = useState<string | null>(null);
+  const [atualizandoCatalogoId, setAtualizandoCatalogoId] = useState<string | null>(null);
   const [salvandoColaborador, setSalvandoColaborador] = useState(false);
+  const [salvandoCatalogo, setSalvandoCatalogo] = useState(false);
 
   const [nomeColaborador, setNomeColaborador] = useState("");
   const [emailColaborador, setEmailColaborador] = useState("");
@@ -521,6 +531,16 @@ export default function Home() {
   const [buscaColaborador, setBuscaColaborador] = useState("");
   const [buscaDispositivo, setBuscaDispositivo] = useState("");
   const [filtroStatusDispositivo, setFiltroStatusDispositivo] = useState("TODOS");
+
+  const [catalogoEditandoId, setCatalogoEditandoId] = useState<string | null>(null);
+  const [catalogoEmpresa, setCatalogoEmpresa] = useState("");
+  const [catalogoArea, setCatalogoArea] = useState("");
+  const [catalogoTipo, setCatalogoTipo] = useState("");
+  const [catalogoEquipamento, setCatalogoEquipamento] = useState("");
+  const [catalogoStatus, setCatalogoStatus] = useState("ATIVO");
+  const [catalogoOrdem, setCatalogoOrdem] = useState("0");
+  const [buscaCatalogo, setBuscaCatalogo] = useState("");
+  const [filtroStatusCatalogo, setFiltroStatusCatalogo] = useState("TODOS");
 
   const [vistoriaSelecionadaId, setVistoriaSelecionadaId] = useState<
     string | null
@@ -708,6 +728,197 @@ export default function Home() {
     }
   }
 
+
+  async function carregarCatalogo() {
+    setCarregandoCatalogo(true);
+    setErro("");
+
+    try {
+      const token = await obterTokenDeAcesso();
+
+      const resposta = await fetch("/api/admin/listar-catalogo", {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const resultado = await resposta.json();
+
+      if (!resposta.ok) {
+        throw new Error(resultado?.erro || "Erro ao carregar catálogo.");
+      }
+
+      setCatalogo(resultado.catalogo ?? []);
+    } catch (error) {
+      setErro(
+        error instanceof Error
+          ? error.message
+          : "Erro inesperado ao carregar catálogo."
+      );
+    } finally {
+      setCarregandoCatalogo(false);
+    }
+  }
+
+  function limparFormularioCatalogo() {
+    setCatalogoEditandoId(null);
+    setCatalogoEmpresa("");
+    setCatalogoArea("");
+    setCatalogoTipo("");
+    setCatalogoEquipamento("");
+    setCatalogoStatus("ATIVO");
+    setCatalogoOrdem("0");
+  }
+
+  function editarItemCatalogo(item: LinhaBanco) {
+    setCatalogoEditandoId(String(item.id ?? ""));
+    setCatalogoEmpresa(String(item.empresa_nome ?? ""));
+    setCatalogoArea(String(item.area_nome ?? ""));
+    setCatalogoTipo(String(item.tipo ?? ""));
+    setCatalogoEquipamento(String(item.equipamento_nome ?? ""));
+    setCatalogoStatus(statusCatalogo(item.status));
+    setCatalogoOrdem(String(item.ordem ?? "0"));
+    setTelaAtiva("catalogo");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  async function salvarItemCatalogo() {
+    setErro("");
+    setAviso("");
+
+    const empresa_nome = catalogoEmpresa.trim();
+    const area_nome = catalogoArea.trim();
+    const tipo = catalogoTipo.trim().toUpperCase();
+    const equipamento_nome = catalogoEquipamento.trim();
+    const status = statusCatalogo(catalogoStatus);
+    const ordem = Number(catalogoOrdem || "0");
+
+    if (!empresa_nome) {
+      setErro("Informe a empresa.");
+      return;
+    }
+
+    if (!area_nome) {
+      setErro("Informe a área.");
+      return;
+    }
+
+    if (!tipo) {
+      setErro("Informe o tipo do equipamento.");
+      return;
+    }
+
+    if (!equipamento_nome) {
+      setErro("Informe o equipamento.");
+      return;
+    }
+
+    setSalvandoCatalogo(true);
+
+    try {
+      const token = await obterTokenDeAcesso();
+
+      const resposta = await fetch("/api/admin/salvar-catalogo", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          id: catalogoEditandoId,
+          empresa_nome,
+          area_nome,
+          tipo,
+          equipamento_nome,
+          status,
+          ordem: Number.isFinite(ordem) ? ordem : 0,
+        }),
+      });
+
+      const resultado = await resposta.json();
+
+      if (!resposta.ok) {
+        throw new Error(resultado?.erro || "Erro ao salvar catálogo.");
+      }
+
+      setAviso(catalogoEditandoId ? "Equipamento atualizado com sucesso." : "Equipamento cadastrado com sucesso.");
+      limparFormularioCatalogo();
+      await carregarCatalogo();
+    } catch (error) {
+      setErro(
+        error instanceof Error
+          ? error.message
+          : "Erro inesperado ao salvar catálogo."
+      );
+    } finally {
+      setSalvandoCatalogo(false);
+    }
+  }
+
+  async function atualizarStatusCatalogo(
+    item: LinhaBanco,
+    acao: "INATIVAR" | "REATIVAR" | "EXCLUIR"
+  ) {
+    setErro("");
+    setAviso("");
+
+    const id = String(item.id ?? "").trim();
+    const equipamento = String(item.equipamento_nome ?? "equipamento");
+
+    if (!id) {
+      setErro("Não foi possível identificar este equipamento.");
+      return;
+    }
+
+    if (acao === "EXCLUIR") {
+      const confirmar = window.confirm(
+        `Tem certeza que deseja excluir ${equipamento} do catálogo? As vistorias antigas continuarão preservadas.`
+      );
+
+      if (!confirmar) return;
+    }
+
+    setAtualizandoCatalogoId(`${id}-${acao}`);
+
+    try {
+      const token = await obterTokenDeAcesso();
+
+      const resposta = await fetch("/api/admin/atualizar-catalogo", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ id, acao }),
+      });
+
+      const resultado = await resposta.json();
+
+      if (!resposta.ok) {
+        throw new Error(resultado?.erro || "Erro ao atualizar catálogo.");
+      }
+
+      if (acao === "INATIVAR") {
+        setAviso(`Equipamento ${equipamento} inativado. Ele não aparecerá no app.`);
+      } else if (acao === "REATIVAR") {
+        setAviso(`Equipamento ${equipamento} reativado. Ele voltará a aparecer no app.`);
+      } else {
+        setAviso(`Equipamento ${equipamento} excluído do catálogo.`);
+      }
+
+      await carregarCatalogo();
+    } catch (error) {
+      setErro(
+        error instanceof Error
+          ? error.message
+          : "Erro inesperado ao atualizar catálogo."
+      );
+    } finally {
+      setAtualizandoCatalogoId(null);
+    }
+  }
+
   async function atualizarStatusDispositivo(
     id: string,
     status: "PENDENTE" | "APROVADO" | "BLOQUEADO"
@@ -778,6 +989,18 @@ export default function Home() {
     }
 
     return "bg-yellow-100 text-yellow-900 hover:bg-yellow-100";
+  }
+
+
+  function statusCatalogo(valor: unknown) {
+    const status = normalizarTexto(valor || "ATIVO");
+    return status === "INATIVO" ? "INATIVO" : "ATIVO";
+  }
+
+  function classeBadgeCatalogo(status: unknown) {
+    return statusCatalogo(status) === "ATIVO"
+      ? "bg-green-100 text-green-800 hover:bg-green-100"
+      : "bg-zinc-200 text-zinc-700 hover:bg-zinc-200";
   }
 
   function gerarSenhaTemporaria() {
@@ -963,6 +1186,7 @@ export default function Home() {
     setFotos([]);
     setColaboradores([]);
     setDispositivos([]);
+    setCatalogo([]);
     setEmail("");
     setSenha("");
     setNomeColaborador("");
@@ -971,6 +1195,9 @@ export default function Home() {
     setBuscaColaborador("");
     setBuscaDispositivo("");
     setFiltroStatusDispositivo("TODOS");
+    limparFormularioCatalogo();
+    setBuscaCatalogo("");
+    setFiltroStatusCatalogo("TODOS");
     setTelaAtiva("dashboard");
     setVistoriaSelecionadaId(null);
   }
@@ -1022,6 +1249,7 @@ export default function Home() {
     if (sessionEmail) {
       carregarColaboradores();
       carregarDispositivos();
+      carregarCatalogo();
     }
   }, [sessionEmail]);
 
@@ -1511,6 +1739,51 @@ export default function Home() {
         return dataB - dataA;
       });
   }, [dispositivos, buscaDispositivo, filtroStatusDispositivo]);
+
+
+  const catalogoFiltrado = useMemo(() => {
+    const busca = normalizarTexto(buscaCatalogo);
+
+    return catalogo
+      .filter((item) => {
+        const status = statusCatalogo(item.status);
+
+        if (filtroStatusCatalogo !== "TODOS" && status !== filtroStatusCatalogo) {
+          return false;
+        }
+
+        if (!busca) return true;
+
+        const texto = normalizarTexto(
+          [
+            item.empresa_nome,
+            item.area_nome,
+            item.tipo,
+            item.equipamento_nome,
+            item.status,
+            item.id,
+          ].join(" ")
+        );
+
+        return texto.includes(busca);
+      })
+      .sort((a, b) => {
+        const empresaA = String(a.empresa_nome ?? "").localeCompare(String(b.empresa_nome ?? ""));
+        if (empresaA !== 0) return empresaA;
+
+        const areaA = String(a.area_nome ?? "").localeCompare(String(b.area_nome ?? ""));
+        if (areaA !== 0) return areaA;
+
+        const tipoA = String(a.tipo ?? "").localeCompare(String(b.tipo ?? ""));
+        if (tipoA !== 0) return tipoA;
+
+        const ordemA = Number(a.ordem ?? 0);
+        const ordemB = Number(b.ordem ?? 0);
+        if (ordemA !== ordemB) return ordemA - ordemB;
+
+        return String(a.equipamento_nome ?? "").localeCompare(String(b.equipamento_nome ?? ""));
+      });
+  }, [catalogo, buscaCatalogo, filtroStatusCatalogo]);
 
   function obterEmpresaRelatorio(vistoria: LinhaBanco) {
     return String(
@@ -2633,6 +2906,11 @@ export default function Home() {
       icon: Building2,
     },
     {
+      id: "catalogo" as TelaAdmin,
+      label: "Catálogo",
+      icon: ClipboardCheck,
+    },
+    {
       id: "colaboradores" as TelaAdmin,
       label: "Colaboradores",
       icon: Users,
@@ -3636,6 +3914,328 @@ export default function Home() {
     );
   }
 
+
+  function renderizarCatalogo() {
+    return (
+      <div className="space-y-4">
+        {erro && (
+          <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm font-semibold text-red-800">
+            {erro}
+          </div>
+        )}
+
+        {aviso && (
+          <div className="rounded-xl border border-green-200 bg-green-50 p-4 text-sm font-semibold text-green-800">
+            {aviso}
+          </div>
+        )}
+
+        <section className="grid gap-4 md:grid-cols-3">
+          <Card className="rounded-2xl border border-zinc-200 bg-white shadow-sm">
+            <CardContent className="p-5">
+              <p className="text-xs font-black uppercase tracking-[0.18em] text-zinc-500">
+                Total no catálogo
+              </p>
+              <p className="mt-2 text-3xl font-black text-red-950">
+                {formatarNumero(catalogo.length)}
+              </p>
+              <p className="text-xs font-semibold text-zinc-500">
+                equipamentos cadastrados
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="rounded-2xl border border-zinc-200 bg-white shadow-sm">
+            <CardContent className="p-5">
+              <p className="text-xs font-black uppercase tracking-[0.18em] text-zinc-500">
+                Ativos
+              </p>
+              <p className="mt-2 text-3xl font-black text-green-700">
+                {formatarNumero(catalogo.filter((item) => statusCatalogo(item.status) === "ATIVO").length)}
+              </p>
+              <p className="text-xs font-semibold text-zinc-500">
+                aparecerão no app
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="rounded-2xl border border-zinc-200 bg-white shadow-sm">
+            <CardContent className="p-5">
+              <p className="text-xs font-black uppercase tracking-[0.18em] text-zinc-500">
+                Inativos
+              </p>
+              <p className="mt-2 text-3xl font-black text-zinc-700">
+                {formatarNumero(catalogo.filter((item) => statusCatalogo(item.status) === "INATIVO").length)}
+              </p>
+              <p className="text-xs font-semibold text-zinc-500">
+                ocultos no app
+              </p>
+            </CardContent>
+          </Card>
+        </section>
+
+        <Card className="rounded-xl border border-zinc-200 bg-white shadow-sm">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-lg font-black text-zinc-800">
+              <Building2 className="h-5 w-5 text-red-900" />
+              {catalogoEditandoId ? "Editar equipamento" : "Adicionar equipamento ao catálogo"}
+            </CardTitle>
+            <p className="text-sm text-zinc-500">
+              Cadastre empresa, área, tipo e equipamento. Apenas itens ativos aparecerão no aplicativo.
+            </p>
+          </CardHeader>
+
+          <CardContent className="space-y-4">
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+              <div>
+                <label className="text-sm font-bold text-red-950">Empresa</label>
+                <Input
+                  value={catalogoEmpresa}
+                  onChange={(event) => setCatalogoEmpresa(event.target.value)}
+                  placeholder="Ex: BP - TROPICAL"
+                  className="mt-2 h-11 rounded-xl"
+                />
+              </div>
+
+              <div>
+                <label className="text-sm font-bold text-red-950">Área</label>
+                <Input
+                  value={catalogoArea}
+                  onChange={(event) => setCatalogoArea(event.target.value)}
+                  placeholder="Ex: POSTO"
+                  className="mt-2 h-11 rounded-xl"
+                />
+              </div>
+
+              <div>
+                <label className="text-sm font-bold text-red-950">Tipo</label>
+                <Input
+                  value={catalogoTipo}
+                  onChange={(event) => setCatalogoTipo(event.target.value)}
+                  placeholder="EXTINTORES, HIDRANTES..."
+                  className="mt-2 h-11 rounded-xl"
+                />
+              </div>
+
+              <div>
+                <label className="text-sm font-bold text-red-950">Status</label>
+                <select
+                  value={catalogoStatus}
+                  onChange={(event) => setCatalogoStatus(event.target.value)}
+                  className="mt-2 h-11 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm"
+                >
+                  <option value="ATIVO">ATIVO</option>
+                  <option value="INATIVO">INATIVO</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="text-sm font-bold text-red-950">Ordem</label>
+                <Input
+                  type="number"
+                  value={catalogoOrdem}
+                  onChange={(event) => setCatalogoOrdem(event.target.value)}
+                  placeholder="0"
+                  className="mt-2 h-11 rounded-xl"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="text-sm font-bold text-red-950">Equipamento</label>
+              <Input
+                value={catalogoEquipamento}
+                onChange={(event) => setCatalogoEquipamento(event.target.value)}
+                placeholder="Ex: 15-POSTO D. LUBRIFICANTES BC 50KG"
+                className="mt-2 h-11 rounded-xl"
+              />
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+              <Button
+                onClick={salvarItemCatalogo}
+                disabled={salvandoCatalogo}
+                className="h-11 rounded-xl bg-red-900 px-6 font-black text-white hover:bg-red-950"
+              >
+                {salvandoCatalogo ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : null}
+                {catalogoEditandoId ? "Salvar alterações" : "Cadastrar equipamento"}
+              </Button>
+
+              {catalogoEditandoId ? (
+                <Button
+                  variant="outline"
+                  onClick={limparFormularioCatalogo}
+                  className="h-11 rounded-xl border-red-200 font-bold text-red-900"
+                >
+                  Cancelar edição
+                </Button>
+              ) : null}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="rounded-xl border border-zinc-200 bg-white shadow-sm">
+          <CardHeader>
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+              <div>
+                <CardTitle className="text-lg font-black text-zinc-800">
+                  Catálogo cadastrado
+                </CardTitle>
+                <p className="text-sm text-zinc-500">
+                  Lista carregada da tabela public.catalogo_equipamentos.
+                </p>
+              </div>
+
+              <div className="flex flex-col gap-2 sm:flex-row">
+                <div className="relative">
+                  <Search className="absolute left-3 top-3 h-4 w-4 text-zinc-400" />
+                  <Input
+                    value={buscaCatalogo}
+                    onChange={(event) => setBuscaCatalogo(event.target.value)}
+                    placeholder="Buscar empresa, área, tipo ou equipamento"
+                    className="h-11 rounded-xl pl-9 sm:w-96"
+                  />
+                </div>
+
+                <select
+                  value={filtroStatusCatalogo}
+                  onChange={(event) => setFiltroStatusCatalogo(event.target.value)}
+                  className="h-11 rounded-xl border border-zinc-200 bg-white px-3 text-sm"
+                >
+                  <option value="TODOS">Todos</option>
+                  <option value="ATIVO">Ativos</option>
+                  <option value="INATIVO">Inativos</option>
+                </select>
+
+                <Button
+                  variant="outline"
+                  onClick={carregarCatalogo}
+                  disabled={carregandoCatalogo}
+                  className="h-11 rounded-xl border-red-200 font-bold text-red-900"
+                >
+                  {carregandoCatalogo ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : null}
+                  Atualizar
+                </Button>
+              </div>
+            </div>
+          </CardHeader>
+
+          <CardContent>
+            {carregandoCatalogo ? (
+              <div className="flex items-center gap-3 rounded-xl bg-zinc-50 p-5 text-sm font-bold text-zinc-600">
+                <Loader2 className="h-4 w-4 animate-spin text-red-900" />
+                Carregando catálogo...
+              </div>
+            ) : catalogoFiltrado.length === 0 ? (
+              <div className="rounded-xl bg-zinc-50 p-5 text-sm font-semibold text-zinc-500">
+                Nenhum equipamento encontrado no catálogo.
+              </div>
+            ) : (
+              <div className="grid gap-3">
+                {catalogoFiltrado.map((item, index) => {
+                  const id = String(item.id ?? index);
+                  const status = statusCatalogo(item.status);
+
+                  return (
+                    <div
+                      key={id}
+                      className="grid gap-3 rounded-xl border border-zinc-200 bg-zinc-50 p-4 xl:grid-cols-[1.05fr_0.9fr_0.75fr_1.5fr_0.55fr_1.3fr]"
+                    >
+                      <div>
+                        <p className="text-xs font-bold uppercase tracking-[0.18em] text-zinc-500">Empresa</p>
+                        <p className="mt-1 font-black text-red-950">{String(item.empresa_nome ?? "-")}</p>
+                      </div>
+
+                      <div>
+                        <p className="text-xs font-bold uppercase tracking-[0.18em] text-zinc-500">Área</p>
+                        <p className="mt-1 font-semibold text-zinc-800">{String(item.area_nome ?? "-")}</p>
+                      </div>
+
+                      <div>
+                        <p className="text-xs font-bold uppercase tracking-[0.18em] text-zinc-500">Tipo</p>
+                        <p className="mt-1 font-semibold text-zinc-800">{String(item.tipo ?? "-")}</p>
+                      </div>
+
+                      <div>
+                        <p className="text-xs font-bold uppercase tracking-[0.18em] text-zinc-500">Equipamento</p>
+                        <p className="mt-1 font-black text-zinc-900">{String(item.equipamento_nome ?? "-")}</p>
+                        <p className="mt-1 text-xs font-medium text-zinc-500">Ordem: {String(item.ordem ?? 0)}</p>
+                      </div>
+
+                      <div>
+                        <p className="text-xs font-bold uppercase tracking-[0.18em] text-zinc-500">Status</p>
+                        <Badge className={`mt-1 ${classeBadgeCatalogo(status)}`}>{status}</Badge>
+                      </div>
+
+                      <div>
+                        <p className="text-xs font-bold uppercase tracking-[0.18em] text-zinc-500">Ações</p>
+                        <div className="mt-1 flex flex-wrap gap-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            disabled={Boolean(atualizandoCatalogoId)}
+                            onClick={() => editarItemCatalogo(item)}
+                            className="rounded-xl border-red-200 text-red-900 hover:bg-red-50"
+                          >
+                            Editar
+                          </Button>
+
+                          {status === "ATIVO" ? (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              disabled={Boolean(atualizandoCatalogoId)}
+                              onClick={() => atualizarStatusCatalogo(item, "INATIVAR")}
+                              className="rounded-xl border-yellow-200 text-yellow-800 hover:bg-yellow-50"
+                            >
+                              {atualizandoCatalogoId === `${id}-INATIVAR` ? (
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                              ) : null}
+                              Inativar
+                            </Button>
+                          ) : (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              disabled={Boolean(atualizandoCatalogoId)}
+                              onClick={() => atualizarStatusCatalogo(item, "REATIVAR")}
+                              className="rounded-xl border-green-200 text-green-800 hover:bg-green-50"
+                            >
+                              {atualizandoCatalogoId === `${id}-REATIVAR` ? (
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                              ) : null}
+                              Reativar
+                            </Button>
+                          )}
+
+                          <Button
+                            size="sm"
+                            disabled={Boolean(atualizandoCatalogoId)}
+                            onClick={() => atualizarStatusCatalogo(item, "EXCLUIR")}
+                            className="rounded-xl bg-red-900 text-white hover:bg-red-950"
+                          >
+                            {atualizandoCatalogoId === `${id}-EXCLUIR` ? (
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            ) : null}
+                            Excluir
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   function renderizarColaboradores() {
     return (
       <div className="space-y-4">
@@ -4590,6 +5190,7 @@ export default function Home() {
     if (telaAtiva === "dashboard") return renderizarDashboard();
     if (telaAtiva === "vistorias") return renderizarVistorias();
     if (telaAtiva === "empresas") return renderizarEmpresas();
+    if (telaAtiva === "catalogo") return renderizarCatalogo();
     if (telaAtiva === "colaboradores") return renderizarColaboradores();
     if (telaAtiva === "dispositivos") return renderizarDispositivos();
     if (telaAtiva === "relatorios") return renderizarRelatorios();
