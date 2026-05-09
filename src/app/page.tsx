@@ -87,6 +87,15 @@ const tiposDashboard = [
 
 const coresGrafico = ["#991b1b", "#dc2626", "#f97316", "#facc15", "#7f1d1d"];
 
+const TIPOS_CATALOGO = [
+  { valor: "EXTINTORES", label: "Extintores" },
+  { valor: "HIDRANTES", label: "Hidrantes" },
+  { valor: "LAVA_OLHOS", label: "Lava-olhos" },
+  { valor: "TESTE_HIDROSTATICO", label: "Teste hidrostático" },
+];
+
+const OPCAO_NOVO_CATALOGO = "__NOVO__";
+
 function normalizarTexto(valor: unknown) {
   return String(valor ?? "")
     .trim()
@@ -533,10 +542,14 @@ export default function Home() {
   const [filtroStatusDispositivo, setFiltroStatusDispositivo] = useState("TODOS");
 
   const [catalogoEditandoId, setCatalogoEditandoId] = useState<string | null>(null);
+  const [catalogoModo, setCatalogoModo] = useState<"CADASTRAR" | "INATIVAR">("CADASTRAR");
+  const [catalogoEmpresaModo, setCatalogoEmpresaModo] = useState<"EXISTENTE" | "NOVO">("EXISTENTE");
+  const [catalogoAreaModo, setCatalogoAreaModo] = useState<"EXISTENTE" | "NOVO">("EXISTENTE");
   const [catalogoEmpresa, setCatalogoEmpresa] = useState("");
   const [catalogoArea, setCatalogoArea] = useState("");
-  const [catalogoTipo, setCatalogoTipo] = useState("");
+  const [catalogoTipo, setCatalogoTipo] = useState("EXTINTORES");
   const [catalogoEquipamento, setCatalogoEquipamento] = useState("");
+  const [catalogoEquipamentoInativarId, setCatalogoEquipamentoInativarId] = useState("");
   const [catalogoStatus, setCatalogoStatus] = useState("ATIVO");
   const [catalogoOrdem, setCatalogoOrdem] = useState("0");
   const [buscaCatalogo, setBuscaCatalogo] = useState("");
@@ -763,20 +776,95 @@ export default function Home() {
 
   function limparFormularioCatalogo() {
     setCatalogoEditandoId(null);
+    setCatalogoModo("CADASTRAR");
+    setCatalogoEmpresaModo("EXISTENTE");
+    setCatalogoAreaModo("EXISTENTE");
     setCatalogoEmpresa("");
     setCatalogoArea("");
-    setCatalogoTipo("");
+    setCatalogoTipo("EXTINTORES");
     setCatalogoEquipamento("");
+    setCatalogoEquipamentoInativarId("");
     setCatalogoStatus("ATIVO");
     setCatalogoOrdem("0");
   }
 
+  function alterarModoCatalogo(modo: "CADASTRAR" | "INATIVAR") {
+    setCatalogoModo(modo);
+    setCatalogoEditandoId(null);
+    setCatalogoEquipamento("");
+    setCatalogoEquipamentoInativarId("");
+    setCatalogoStatus(modo === "INATIVAR" ? "INATIVO" : "ATIVO");
+  }
+
+  function selecionarEmpresaCatalogo(valor: string) {
+    setCatalogoArea("");
+    setCatalogoEquipamento("");
+    setCatalogoEquipamentoInativarId("");
+
+    if (valor === OPCAO_NOVO_CATALOGO) {
+      setCatalogoEmpresaModo("NOVO");
+      setCatalogoEmpresa("");
+      setCatalogoAreaModo("NOVO");
+      return;
+    }
+
+    setCatalogoEmpresaModo("EXISTENTE");
+    setCatalogoEmpresa(valor);
+    setCatalogoAreaModo("EXISTENTE");
+  }
+
+  function selecionarAreaCatalogo(valor: string) {
+    setCatalogoEquipamento("");
+    setCatalogoEquipamentoInativarId("");
+
+    if (valor === OPCAO_NOVO_CATALOGO) {
+      setCatalogoAreaModo("NOVO");
+      setCatalogoArea("");
+      return;
+    }
+
+    setCatalogoAreaModo("EXISTENTE");
+    setCatalogoArea(valor);
+  }
+
+  function obterEmpresaCatalogoSelecionada() {
+    return catalogoEmpresa.trim();
+  }
+
+  function obterAreaCatalogoSelecionada() {
+    return catalogoArea.trim();
+  }
+
+  function proximaOrdemCatalogo(empresa: string, area: string, tipo: string) {
+    const empresaNormalizada = normalizarTexto(empresa);
+    const areaNormalizada = normalizarTexto(area);
+    const tipoNormalizado = normalizarTexto(tipo);
+
+    const maiorOrdem = catalogo
+      .filter(
+        (item) =>
+          normalizarTexto(item.empresa_nome) === empresaNormalizada &&
+          normalizarTexto(item.area_nome) === areaNormalizada &&
+          normalizarTexto(item.tipo) === tipoNormalizado
+      )
+      .reduce((maior, item) => {
+        const ordem = Number(item.ordem ?? 0);
+        return Number.isFinite(ordem) && ordem > maior ? ordem : maior;
+      }, 0);
+
+    return maiorOrdem + 1;
+  }
+
   function editarItemCatalogo(item: LinhaBanco) {
     setCatalogoEditandoId(String(item.id ?? ""));
+    setCatalogoModo("CADASTRAR");
+    setCatalogoEmpresaModo("EXISTENTE");
+    setCatalogoAreaModo("EXISTENTE");
     setCatalogoEmpresa(String(item.empresa_nome ?? ""));
     setCatalogoArea(String(item.area_nome ?? ""));
-    setCatalogoTipo(String(item.tipo ?? ""));
+    setCatalogoTipo(String(item.tipo ?? "EXTINTORES"));
     setCatalogoEquipamento(String(item.equipamento_nome ?? ""));
+    setCatalogoEquipamentoInativarId("");
     setCatalogoStatus(statusCatalogo(item.status));
     setCatalogoOrdem(String(item.ordem ?? "0"));
     setTelaAtiva("catalogo");
@@ -787,12 +875,19 @@ export default function Home() {
     setErro("");
     setAviso("");
 
-    const empresa_nome = catalogoEmpresa.trim();
-    const area_nome = catalogoArea.trim();
+    if (catalogoModo === "INATIVAR") {
+      await inativarEquipamentoSelecionado();
+      return;
+    }
+
+    const empresa_nome = obterEmpresaCatalogoSelecionada();
+    const area_nome = obterAreaCatalogoSelecionada();
     const tipo = catalogoTipo.trim().toUpperCase();
     const equipamento_nome = catalogoEquipamento.trim();
-    const status = statusCatalogo(catalogoStatus);
-    const ordem = Number(catalogoOrdem || "0");
+    const status = catalogoEditandoId ? statusCatalogo(catalogoStatus) : "ATIVO";
+    const ordem = catalogoEditandoId
+      ? Number(catalogoOrdem || "0")
+      : proximaOrdemCatalogo(empresa_nome, area_nome, tipo);
 
     if (!empresa_nome) {
       setErro("Informe a empresa.");
@@ -917,6 +1012,24 @@ export default function Home() {
     } finally {
       setAtualizandoCatalogoId(null);
     }
+  }
+
+
+  async function inativarEquipamentoSelecionado() {
+    setErro("");
+    setAviso("");
+
+    const item = catalogo.find(
+      (equipamento) => String(equipamento.id ?? "") === catalogoEquipamentoInativarId
+    );
+
+    if (!item) {
+      setErro("Selecione um equipamento ativo para inativar.");
+      return;
+    }
+
+    await atualizarStatusCatalogo(item, "INATIVAR");
+    setCatalogoEquipamentoInativarId("");
   }
 
   async function atualizarStatusDispositivo(
@@ -1740,6 +1853,56 @@ export default function Home() {
       });
   }, [dispositivos, buscaDispositivo, filtroStatusDispositivo]);
 
+
+  const empresasCatalogoDisponiveis = useMemo(() => {
+    return Array.from(
+      new Set(
+        catalogo
+          .map((item) => String(item.empresa_nome ?? "").trim())
+          .filter(Boolean)
+      )
+    ).sort((a, b) => a.localeCompare(b));
+  }, [catalogo]);
+
+  const areasCatalogoDisponiveis = useMemo(() => {
+    const empresaSelecionada = normalizarTexto(catalogoEmpresa);
+
+    if (!empresaSelecionada) return [];
+
+    return Array.from(
+      new Set(
+        catalogo
+          .filter(
+            (item) => normalizarTexto(item.empresa_nome) === empresaSelecionada
+          )
+          .map((item) => String(item.area_nome ?? "").trim())
+          .filter(Boolean)
+      )
+    ).sort((a, b) => a.localeCompare(b));
+  }, [catalogo, catalogoEmpresa]);
+
+  const equipamentosAtivosCatalogoDisponiveis = useMemo(() => {
+    const empresaSelecionada = normalizarTexto(catalogoEmpresa);
+    const areaSelecionada = normalizarTexto(catalogoArea);
+    const tipoSelecionado = normalizarTexto(catalogoTipo);
+
+    if (!empresaSelecionada || !areaSelecionada || !tipoSelecionado) return [];
+
+    return catalogo
+      .filter(
+        (item) =>
+          normalizarTexto(item.empresa_nome) === empresaSelecionada &&
+          normalizarTexto(item.area_nome) === areaSelecionada &&
+          normalizarTexto(item.tipo) === tipoSelecionado &&
+          statusCatalogo(item.status) === "ATIVO"
+      )
+      .sort((a, b) => {
+        const ordemA = Number(a.ordem ?? 0);
+        const ordemB = Number(b.ordem ?? 0);
+        if (ordemA !== ordemB) return ordemA - ordemB;
+        return String(a.equipamento_nome ?? "").localeCompare(String(b.equipamento_nome ?? ""));
+      });
+  }, [catalogo, catalogoEmpresa, catalogoArea, catalogoTipo]);
 
   const catalogoFiltrado = useMemo(() => {
     const busca = normalizarTexto(buscaCatalogo);
@@ -3978,100 +4141,207 @@ export default function Home() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-lg font-black text-zinc-800">
               <Building2 className="h-5 w-5 text-red-900" />
-              {catalogoEditandoId ? "Editar equipamento" : "Adicionar equipamento ao catálogo"}
+              {catalogoEditandoId
+                ? "Editar equipamento"
+                : catalogoModo === "INATIVAR"
+                  ? "Inativar equipamento do catálogo"
+                  : "Cadastrar equipamento no catálogo"}
             </CardTitle>
             <p className="text-sm text-zinc-500">
-              Cadastre empresa, área, tipo e equipamento. Apenas itens ativos aparecerão no aplicativo.
+              Escolha uma empresa já cadastrada ou crie uma nova. Depois selecione a área, o tipo e cadastre ou inative o equipamento.
             </p>
           </CardHeader>
 
           <CardContent className="space-y-4">
-            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+            <div className="flex flex-wrap gap-2 rounded-2xl bg-red-50 p-2">
+              <button
+                type="button"
+                onClick={() => alterarModoCatalogo("CADASTRAR")}
+                className={`rounded-xl px-4 py-2 text-sm font-black transition ${
+                  catalogoModo === "CADASTRAR"
+                    ? "bg-red-900 text-white"
+                    : "bg-white text-red-900 hover:bg-red-100"
+                }`}
+              >
+                Cadastrar novo
+              </button>
+
+              <button
+                type="button"
+                onClick={() => alterarModoCatalogo("INATIVAR")}
+                className={`rounded-xl px-4 py-2 text-sm font-black transition ${
+                  catalogoModo === "INATIVAR"
+                    ? "bg-red-900 text-white"
+                    : "bg-white text-red-900 hover:bg-red-100"
+                }`}
+              >
+                Inativar existente
+              </button>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
               <div>
                 <label className="text-sm font-bold text-red-950">Empresa</label>
-                <Input
-                  value={catalogoEmpresa}
-                  onChange={(event) => setCatalogoEmpresa(event.target.value)}
-                  placeholder="Ex: BP - TROPICAL"
-                  className="mt-2 h-11 rounded-xl"
-                />
+                <select
+                  value={catalogoEmpresaModo === "NOVO" ? OPCAO_NOVO_CATALOGO : catalogoEmpresa}
+                  onChange={(event) => selecionarEmpresaCatalogo(event.target.value)}
+                  className="mt-2 h-11 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm"
+                >
+                  <option value="">Selecione a empresa</option>
+                  {catalogoModo === "CADASTRAR" ? (
+                    <option value={OPCAO_NOVO_CATALOGO}>+ Nova empresa</option>
+                  ) : null}
+                  {empresasCatalogoDisponiveis.map((empresa) => (
+                    <option key={empresa} value={empresa}>
+                      {empresa}
+                    </option>
+                  ))}
+                </select>
+
+                {catalogoEmpresaModo === "NOVO" ? (
+                  <Input
+                    value={catalogoEmpresa}
+                    onChange={(event) => setCatalogoEmpresa(event.target.value)}
+                    placeholder="Nome da nova empresa"
+                    className="mt-2 h-11 rounded-xl"
+                  />
+                ) : null}
               </div>
 
               <div>
                 <label className="text-sm font-bold text-red-950">Área</label>
-                <Input
-                  value={catalogoArea}
-                  onChange={(event) => setCatalogoArea(event.target.value)}
-                  placeholder="Ex: POSTO"
-                  className="mt-2 h-11 rounded-xl"
-                />
+                {catalogoEmpresaModo === "NOVO" ? (
+                  <Input
+                    value={catalogoArea}
+                    onChange={(event) => setCatalogoArea(event.target.value)}
+                    placeholder="Nome da nova área"
+                    className="mt-2 h-11 rounded-xl"
+                  />
+                ) : (
+                  <>
+                    <select
+                      value={catalogoAreaModo === "NOVO" ? OPCAO_NOVO_CATALOGO : catalogoArea}
+                      onChange={(event) => selecionarAreaCatalogo(event.target.value)}
+                      disabled={!catalogoEmpresa}
+                      className="mt-2 h-11 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm disabled:bg-zinc-100 disabled:text-zinc-400"
+                    >
+                      <option value="">Selecione a área</option>
+                      {catalogoModo === "CADASTRAR" ? (
+                        <option value={OPCAO_NOVO_CATALOGO}>+ Nova área</option>
+                      ) : null}
+                      {areasCatalogoDisponiveis.map((area) => (
+                        <option key={area} value={area}>
+                          {area}
+                        </option>
+                      ))}
+                    </select>
+
+                    {catalogoAreaModo === "NOVO" ? (
+                      <Input
+                        value={catalogoArea}
+                        onChange={(event) => setCatalogoArea(event.target.value)}
+                        placeholder="Nome da nova área"
+                        className="mt-2 h-11 rounded-xl"
+                      />
+                    ) : null}
+                  </>
+                )}
               </div>
 
               <div>
                 <label className="text-sm font-bold text-red-950">Tipo</label>
-                <Input
-                  value={catalogoTipo}
-                  onChange={(event) => setCatalogoTipo(event.target.value)}
-                  placeholder="EXTINTORES, HIDRANTES..."
-                  className="mt-2 h-11 rounded-xl"
-                />
-              </div>
-
-              <div>
-                <label className="text-sm font-bold text-red-950">Status</label>
                 <select
-                  value={catalogoStatus}
-                  onChange={(event) => setCatalogoStatus(event.target.value)}
+                  value={catalogoTipo}
+                  onChange={(event) => {
+                    setCatalogoTipo(event.target.value);
+                    setCatalogoEquipamentoInativarId("");
+                  }}
                   className="mt-2 h-11 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm"
                 >
-                  <option value="ATIVO">ATIVO</option>
-                  <option value="INATIVO">INATIVO</option>
+                  {TIPOS_CATALOGO.map((tipo) => (
+                    <option key={tipo.valor} value={tipo.valor}>
+                      {tipo.label}
+                    </option>
+                  ))}
                 </select>
               </div>
 
               <div>
-                <label className="text-sm font-bold text-red-950">Ordem</label>
-                <Input
-                  type="number"
-                  value={catalogoOrdem}
-                  onChange={(event) => setCatalogoOrdem(event.target.value)}
-                  placeholder="0"
-                  className="mt-2 h-11 rounded-xl"
-                />
+                <label className="text-sm font-bold text-red-950">Status</label>
+                <div className="mt-2 flex h-11 items-center rounded-xl border border-zinc-200 bg-zinc-50 px-3 text-sm font-black text-zinc-700">
+                  {catalogoModo === "INATIVAR" ? "INATIVO" : "ATIVO"}
+                </div>
+                <p className="mt-1 text-xs font-medium text-zinc-500">
+                  {catalogoModo === "INATIVAR"
+                    ? "O equipamento selecionado será ocultado no app."
+                    : "Novos equipamentos entram ativos automaticamente."}
+                </p>
               </div>
             </div>
 
-            <div>
-              <label className="text-sm font-bold text-red-950">Equipamento</label>
-              <Input
-                value={catalogoEquipamento}
-                onChange={(event) => setCatalogoEquipamento(event.target.value)}
-                placeholder="Ex: 15-POSTO D. LUBRIFICANTES BC 50KG"
-                className="mt-2 h-11 rounded-xl"
-              />
-            </div>
+            {catalogoModo === "INATIVAR" ? (
+              <div>
+                <label className="text-sm font-bold text-red-950">Equipamento ativo para inativar</label>
+                <select
+                  value={catalogoEquipamentoInativarId}
+                  onChange={(event) => setCatalogoEquipamentoInativarId(event.target.value)}
+                  disabled={!catalogoEmpresa || !catalogoArea || equipamentosAtivosCatalogoDisponiveis.length === 0}
+                  className="mt-2 h-11 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm disabled:bg-zinc-100 disabled:text-zinc-400"
+                >
+                  <option value="">
+                    {equipamentosAtivosCatalogoDisponiveis.length === 0
+                      ? "Nenhum equipamento ativo para este caminho"
+                      : "Selecione o equipamento ativo"}
+                  </option>
+                  {equipamentosAtivosCatalogoDisponiveis.map((item) => (
+                    <option key={String(item.id)} value={String(item.id)}>
+                      {String(item.equipamento_nome ?? "Equipamento sem nome")}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            ) : (
+              <div>
+                <label className="text-sm font-bold text-red-950">Equipamento</label>
+                <Input
+                  value={catalogoEquipamento}
+                  onChange={(event) => setCatalogoEquipamento(event.target.value)}
+                  placeholder="Ex: 15-POSTO D. LUBRIFICANTES BC 50KG"
+                  className="mt-2 h-11 rounded-xl"
+                />
+                <p className="mt-1 text-xs font-medium text-zinc-500">
+                  A sequência é definida automaticamente conforme empresa, área e tipo.
+                </p>
+              </div>
+            )}
 
             <div className="flex flex-wrap gap-2">
               <Button
                 onClick={salvarItemCatalogo}
-                disabled={salvandoCatalogo}
+                disabled={
+                  salvandoCatalogo ||
+                  Boolean(atualizandoCatalogoId) ||
+                  (catalogoModo === "INATIVAR" && !catalogoEquipamentoInativarId)
+                }
                 className="h-11 rounded-xl bg-red-900 px-6 font-black text-white hover:bg-red-950"
               >
-                {salvandoCatalogo ? (
+                {salvandoCatalogo || atualizandoCatalogoId ? (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 ) : null}
-                {catalogoEditandoId ? "Salvar alterações" : "Cadastrar equipamento"}
+                {catalogoEditandoId
+                  ? "Salvar alterações"
+                  : catalogoModo === "INATIVAR"
+                    ? "Inativar equipamento"
+                    : "Cadastrar equipamento"}
               </Button>
 
-              {catalogoEditandoId ? (
-                <Button
-                  variant="outline"
-                  onClick={limparFormularioCatalogo}
-                  className="h-11 rounded-xl border-red-200 font-bold text-red-900"
-                >
-                  Cancelar edição
-                </Button>
-              ) : null}
+              <Button
+                variant="outline"
+                onClick={limparFormularioCatalogo}
+                className="h-11 rounded-xl border-red-200 font-bold text-red-900"
+              >
+                Limpar
+              </Button>
             </div>
           </CardContent>
         </Card>
@@ -4163,7 +4433,6 @@ export default function Home() {
                       <div>
                         <p className="text-xs font-bold uppercase tracking-[0.18em] text-zinc-500">Equipamento</p>
                         <p className="mt-1 font-black text-zinc-900">{String(item.equipamento_nome ?? "-")}</p>
-                        <p className="mt-1 text-xs font-medium text-zinc-500">Ordem: {String(item.ordem ?? 0)}</p>
                       </div>
 
                       <div>
