@@ -512,6 +512,7 @@ export default function Home() {
   const [carregandoColaboradores, setCarregandoColaboradores] = useState(false);
   const [carregandoDispositivos, setCarregandoDispositivos] = useState(false);
   const [atualizandoDispositivoId, setAtualizandoDispositivoId] = useState<string | null>(null);
+  const [atualizandoColaboradorId, setAtualizandoColaboradorId] = useState<string | null>(null);
   const [salvandoColaborador, setSalvandoColaborador] = useState(false);
 
   const [nomeColaborador, setNomeColaborador] = useState("");
@@ -845,6 +846,72 @@ export default function Home() {
       );
     } finally {
       setSalvandoColaborador(false);
+    }
+  }
+
+  async function atualizarStatusColaborador(
+    colaborador: LinhaBanco,
+    acao: "INATIVAR" | "REATIVAR" | "EXCLUIR"
+  ) {
+    setErro("");
+    setAviso("");
+
+    const id = String(colaborador.id ?? "").trim();
+    const nome = String(colaborador.nome ?? colaborador.email ?? "colaborador");
+
+    if (!id) {
+      setErro("Não foi possível identificar este colaborador.");
+      return;
+    }
+
+    if (acao === "EXCLUIR") {
+      const confirmar = window.confirm(
+        `Tem certeza que deseja excluir ${nome}? O histórico de vistorias já realizadas será preservado, mas o colaborador sairá da lista e o login será bloqueado.`
+      );
+
+      if (!confirmar) return;
+    }
+
+    setAtualizandoColaboradorId(`${id}-${acao}`);
+
+    try {
+      const token = await obterTokenDeAcesso();
+
+      const resposta = await fetch("/api/admin/atualizar-colaborador", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          id,
+          acao,
+        }),
+      });
+
+      const resultado = await resposta.json();
+
+      if (!resposta.ok) {
+        throw new Error(resultado?.erro || "Erro ao atualizar colaborador.");
+      }
+
+      if (acao === "INATIVAR") {
+        setAviso(`Colaborador ${nome} inativado com sucesso.`);
+      } else if (acao === "REATIVAR") {
+        setAviso(`Colaborador ${nome} reativado com sucesso.`);
+      } else {
+        setAviso(`Colaborador ${nome} excluído com sucesso.`);
+      }
+
+      await carregarColaboradores();
+    } catch (error) {
+      setErro(
+        error instanceof Error
+          ? error.message
+          : "Erro inesperado ao atualizar colaborador."
+      );
+    } finally {
+      setAtualizandoColaboradorId(null);
     }
   }
 
@@ -3719,7 +3786,7 @@ export default function Home() {
                   return (
                     <div
                       key={String(colaborador.id ?? email)}
-                      className="grid gap-3 rounded-xl border border-zinc-200 bg-zinc-50 p-4 lg:grid-cols-[1.5fr_1.5fr_1fr_1fr]"
+                      className="grid gap-3 rounded-xl border border-zinc-200 bg-zinc-50 p-4 lg:grid-cols-[1.35fr_1.45fr_0.8fr_0.9fr_1.25fr]"
                     >
                       <div>
                         <p className="text-xs font-bold uppercase tracking-[0.18em] text-zinc-500">
@@ -3763,6 +3830,53 @@ export default function Home() {
                           <span className="text-xs font-medium text-zinc-500">
                             {formatarData(dataCriacao)}
                           </span>
+                        </div>
+                      </div>
+
+                      <div>
+                        <p className="text-xs font-bold uppercase tracking-[0.18em] text-zinc-500">
+                          Ações
+                        </p>
+                        <div className="mt-1 flex flex-wrap gap-2">
+                          {ativo ? (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              disabled={Boolean(atualizandoColaboradorId)}
+                              onClick={() => atualizarStatusColaborador(colaborador, "INATIVAR")}
+                              className="rounded-xl border-yellow-200 text-yellow-800 hover:bg-yellow-50"
+                            >
+                              {atualizandoColaboradorId === `${String(colaborador.id)}-INATIVAR` ? (
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                              ) : null}
+                              Inativar
+                            </Button>
+                          ) : (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              disabled={Boolean(atualizandoColaboradorId)}
+                              onClick={() => atualizarStatusColaborador(colaborador, "REATIVAR")}
+                              className="rounded-xl border-green-200 text-green-800 hover:bg-green-50"
+                            >
+                              {atualizandoColaboradorId === `${String(colaborador.id)}-REATIVAR` ? (
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                              ) : null}
+                              Reativar
+                            </Button>
+                          )}
+
+                          <Button
+                            size="sm"
+                            disabled={Boolean(atualizandoColaboradorId)}
+                            onClick={() => atualizarStatusColaborador(colaborador, "EXCLUIR")}
+                            className="rounded-xl bg-red-900 text-white hover:bg-red-950"
+                          >
+                            {atualizandoColaboradorId === `${String(colaborador.id)}-EXCLUIR` ? (
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            ) : null}
+                            Excluir
+                          </Button>
                         </div>
                       </div>
                     </div>
