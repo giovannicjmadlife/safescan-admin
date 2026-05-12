@@ -2438,7 +2438,8 @@ export default function Home() {
     doc: any,
     vistoria: LinhaBanco,
     posicaoY: number,
-    indice?: number
+    indice?: number,
+    respostasExternas?: LinhaBanco[]
   ) {
     const margemX = 40;
     const larguraTotal = 515;
@@ -2447,7 +2448,7 @@ export default function Home() {
     const espacoEntreColunas = 18;
     const posicaoXFoto = margemX + larguraTotal - larguraFoto - 12;
     const larguraInfo = larguraTotal - larguraFoto - espacoEntreColunas - 18;
-    const checklist = obterRespostasUnicasDaVistoria(vistoria.id);
+    const checklist = respostasExternas ?? obterRespostasUnicasDaVistoria(vistoria.id);
 
     posicaoY = garantirEspacoNoPdf(doc, posicaoY, 228);
 
@@ -2636,6 +2637,32 @@ export default function Home() {
     doc.save(nomeArquivo);
   }
 
+  async function buscarRespostasDaVistoriaParaRelatorio(vistoriaId: unknown) {
+    const id = String(vistoriaId ?? "").trim();
+
+    if (!id) {
+      return obterRespostasUnicasDaVistoria(vistoriaId);
+    }
+
+    const { data, error } = await supabase
+      .from("vistoria_respostas")
+      .select("id, vistoria_id, pergunta, resposta, detalhe, ordem, created_at")
+      .eq("vistoria_id", id)
+      .order("ordem", { ascending: true });
+
+    if (error) {
+      throw new Error(`Erro ao buscar checklist da vistoria: ${error.message}`);
+    }
+
+    const respostasDoBanco = (data ?? []) as LinhaBanco[];
+
+    if (respostasDoBanco.length > 0) {
+      return respostasDoBanco;
+    }
+
+    return obterRespostasUnicasDaVistoria(vistoriaId);
+  }
+
   async function gerarPdfRelatorioIndividual(
     vistoria: LinhaBanco,
     acao: "visualizar" | "baixar"
@@ -2651,7 +2678,14 @@ export default function Home() {
       const subtitulo = `Equipamento: ${obterEquipamento(vistoria)} | Vistoria realizada por: ${obterColaboradorExibido(vistoria)}`;
 
       let posicaoY = escreverCabecalhoRelatorio(doc, titulo, subtitulo);
-      posicaoY = await escreverBlocoVistoriaTexto(doc, vistoria, posicaoY, 1);
+      const checklistRelatorio = await buscarRespostasDaVistoriaParaRelatorio(vistoria.id);
+      posicaoY = await escreverBlocoVistoriaTexto(
+        doc,
+        vistoria,
+        posicaoY,
+        1,
+        checklistRelatorio
+      );
 
       await finalizarPdfRelatorio(
         doc,
@@ -2700,7 +2734,15 @@ export default function Home() {
       let posicaoY = escreverCabecalhoRelatorio(doc, titulo, subtitulo);
 
       for (const [indice, vistoria] of itensUnicos.entries()) {
-        posicaoY = await escreverBlocoVistoriaTexto(doc, vistoria, posicaoY, indice + 1);
+        const checklistRelatorio = await buscarRespostasDaVistoriaParaRelatorio(vistoria.id);
+
+        posicaoY = await escreverBlocoVistoriaTexto(
+          doc,
+          vistoria,
+          posicaoY,
+          indice + 1,
+          checklistRelatorio
+        );
       }
 
       await finalizarPdfRelatorio(
