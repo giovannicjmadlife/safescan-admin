@@ -96,12 +96,2440 @@ const TIPOS_CATALOGO = [
 
 const OPCAO_NOVO_CATALOGO = "__NOVO__";
 
+// Inventário fixo legado importado exatamente do main.dart do app Flutter.
+// Esse mapa é a base verdadeira para calcular o dashboard de extintores por empresa/área.
+// Não calcular o total usando apenas as vistorias filtradas, senão 1 vistoria vira 1/1 = 100%.
+const CATALOGO_FIXO_EXTINTORES: Record<string, Record<string, string[]>> = {
+  "BP - TROPICAL": {
+    "POSTO": [
+      "1-POSTO ESCRITÓRIO",
+      "2-POSTO BOMBA 08 E 09",
+      "3-POSTO BOMBA 08 E 09",
+      "4-POSTO BOMBA 10 E 11",
+      "5-POSTO BOMBA 10 E 11",
+      "6-POSTO BOMBA ALTA VAZÃO",
+      "7-POSTO BOMBA ALTA VAZÃO",
+      "8-POSTO BOMBA 12 E 13",
+      "9-POSTO BOMBA 12 E 13",
+      "10-POSTO BOMBA 12 E 13",
+      "11-POSTO FILTROS",
+      "12-POSTO FILTROS",
+      "13-POSTO FILTROS",
+      "14-POSTO D. LUBRIFICANTES",
+      "15-POSTO D. LUBRIFICANTES",
+    ],
+    "PORTARIA": [
+      "1-ÁREA DE VIVÊNCIA AGRÍCOLA",
+      "2-AUTOMAÇÃO AGRÍCOLA INTERNO",
+      "3-PORTARIA B. INCÊNDIO",
+      "4-PORTARIA ENTRADA",
+    ],
+    "OFICINA BORRACHARIA / LAVADOR": [
+      "1-OFICINA AGRÍCOLA BORRACHARIA",
+      "2-OFICINA AGRÍCOLA BORRACHARIA",
+      "3-OFICINA AGRÍCOLA BORRACHARIA",
+      "4-OFICINA AGRÍCOLA BORRACHARIA",
+      "5-OFICINA AGRÍCOLA BORRACHARIA",
+      "6-OFICINA AGRÍCOLA LAVADOR",
+    ],
+    "OFICINA AUTOMOTIVA": [
+      "1-OFICINA AGRÍCOLA ESCRITÓRIO",
+      "2-OFICINA AGRÍCOLA OFICINA",
+      "3-OFICINA AGRÍCOLA 1º PISO ESCADA",
+      "4-OFICINA SALA REUNIÃO",
+      "5-OFICINA AGRÍCOLA OFICINA",
+      "6-OFICINA AGRÍCOLA OFICINA",
+      "7-OFICINA AGRÍCOLA OFICINA",
+      "8-OFICINA AGRÍCOLA OFICINA",
+      "9-OFICINA AGRÍCOLA OFICINA",
+      "10-OFICINA AGRÍCOLA OFICINA",
+    ],
+    "OFIC IMPLEMENTO SALA MONTAGEM": [
+      "1-OFICINA IMPLEMENTOS",
+      "2-OFICINA IMPLEMENTOS",
+      "3-OFICINA IMPLEMENTOS",
+    ],
+    "EXPEDIÇÃO": [
+      "1-EXPEDIÇÃO EXTERNO",
+      "2-EXPEDIÇÃO EXTERNO",
+      "3-EXPEDIÇÃO EXTERNO",
+      "4-EXPEDIÇÃO EXTERNO",
+    ],
+    "VIST CAMINHÃO FATURAMENTO": [
+      "1-VIST CAMINHÃO FATURAMENTO",
+      "2-VIST CAMINHÃO FATURAMENTO",
+      "3-VIST CAMINHÃO FATURAMENTO",
+    ],
+    "DEPÓSITO INSUMOS": [
+      "1-ALMOXARIFADO",
+      "2-ESCRITÓRIO",
+      "3-CO. ESCRITÓRIO",
+      "4-LÍQUIDO A EXTERNO",
+      "5-LÍQUIDO A EXTERNO",
+      "6-LÍQUIDO A EXTERNO",
+      "7-LÍQUIDO A EXTERNO",
+      "8-LÍQUIDO B EXTERNO",
+      "9-LÍQUIDO B EXTERNO",
+      "10-LÍQUIDO B EXTERNO",
+      "11-INTERNO",
+      "12-INTERNO",
+    ],
+    "BALANÇA": ["1-BALANÇA 01", "2-BALANÇA 02"],
+    "PCTS": [
+      "1-PCTS EXTERNO",
+      "2-PCTS EXTERNO",
+      "3-PCTS INTERNO",
+      "4-PCTS INTERNO",
+      "5-PCTS EXTERNO",
+    ],
+    "TRATAMENTO ESGOTO": ["1-ETE"],
+    "ÁREA DE VIVÊNCIA": [
+      "1-ÁREA DE VIVÊNCIA",
+      "2-ÁREA DE VIVÊNCIA",
+      "3-ÁREA DE VIVÊNCIA",
+    ],
+    "ADMINISTRATIVO RECEPÇÃO": [
+      "1-CORREDOR",
+      "2-ADMINISTRATIVO",
+      "3-TEC INFORMÁTICA",
+    ],
+    "PORTARIA INDUSTRIA / RH": ["1-INDUSTRIA", "2-RH"],
+    "SALA JEQUITIBÁ": ["1-SALA JEQUITIBÁ", "2-SALA JEQUITIBÁ"],
+    "SALA JERIVÁ": ["1-SALA JERIVÁ", "2-SALA JERIVÁ"],
+    "SALA ANGELIN": ["1-SALA ANGELIN", "2-SALA ANGELIN"],
+    "SALA CAJÁ": ["1-SALA CAJÁ", "2-SALA CAJA"],
+    "SALA CEDRO": ["1-SALA CEDRO", "2-SALA CEDRO"],
+    "SALA DOJÔ INDUSTRIA": ["1-DOJÔ INDUSTRIA", "2-DOJÔ INDUSTRIA"],
+    "SALA DOJÔ AGRICOLA": ["1-DOJÔ AGRICOLA", "2-DOJÔ AGRICOLA"],
+    "SEGURANÇA DO TRABALHO": [
+      "1-HSSE CONS MÉDICO",
+      "2-HSSE SEG TRABALHO",
+      "3-SEG DO TRABALHO",
+    ],
+    "ALMOXARIFADO": [
+      "1-INTERNO",
+      "2-INTERNO",
+      "3-INTERNO",
+      "4-DEP.EXTERNO",
+      "5-DEP.EXTERNO",
+      "6-DEP.LUBRIFICANTE",
+      "7-DEP.LUBRIFICANTE",
+    ],
+    "REFEITÓRIO": [
+      "1-FUNDO COZINHA",
+      "2-FUNDO COZINHA",
+      "3-FUNDO COZINHA",
+      "4-SALÃO ALIMENTAÇÃO",
+      "5-SALÃO ALIMENTAÇÃO",
+      "6-COZINHA",
+      "7-COZINHA",
+      "8-GLP",
+      "9-GLP",
+      "10-GLP",
+    ],
+    "COI": [
+      "1-RECEPÇÃO",
+      "2-RECEPÇÃO",
+      "3-COMPLEXO",
+      "4-COI",
+      "5-COI",
+      "6-COR.LABORATÓRIO",
+      "7-LABORATÓRIO",
+      "8-GLP LABORATÓRIO",
+      "9-GLP LABORATÓRIO",
+    ],
+    "BARRACÃO DE AÇUCAR": [
+      "1-BARRACÃO DE AÇUCAR",
+      "2-BARRACÃO DE AÇUCAR",
+      "3-BARRACÃO DE AÇUCAR",
+    ],
+    "MANUTENÇÃO": ["1-INSTRUMENTAL", "2-MECÂNICA", "3-MECÂNICA"],
+    "DEPÓSITO DE OXIGÊNIO": ["1-DEP OXIGÊNIO", "2-DEP OXIGÊNIO"],
+    "CAIEIRA": ["1-TÉRREO", "2-TÉRREO", "3-CCM"],
+    "CENTRAL DE RESÍDUOS": ["1-CENTRAL DE RESÍDUOS", "2-CENTRAL DE RESÍDUOS"],
+    "BATE E VOLTA MOTORISTA": ["1-BATE E VOLTA"],
+    "DIFUSOR CCM 02": [
+      "1-TERREO",
+      "2-TERREO",
+      "3-TERREO",
+      "4-TERREO",
+      "5-TERREO",
+      "6-PISO 1",
+      "7-PISO 1",
+      "8-PISO 1",
+      "9-PISO 1",
+      "10-PISO 1",
+      "11-PISO 1",
+      "12-PISO 1",
+    ],
+    "DIFUSOR 02 TERREO MOTORES": [
+      "1-ESCADA",
+      "2-MOTORES",
+      "3-MOTORES",
+      "4-TÉRREO",
+      "5-TÉRREO",
+      "6-TÉRREO",
+      "7-LUBRIF. TÉRREO",
+      "8-MOENDA PISO 01",
+      "9-ESTEIRA",
+      "10-HILO A",
+      "11-HILO B",
+      "12-PISO SUPERIOR",
+      "13-PISO SUPERIOR",
+      "14-PISO SUPERIOR",
+      "15-PISO SUP AQUEC CALDO",
+      "16-DESAGUADOR PISO 01",
+      "17-DESAGUADOR PISO 01",
+      "18-MOENDA DESAGUADOR",
+    ],
+    "DIFUSOR 01 CCM": ["1-CCM", "2-CCM", "3-CCM"],
+    "DIFUSOR 01 TÉRREO": [
+      "1-TÉRREO",
+      "2-TÉRREO",
+      "3-TÉRREO",
+      "4-TERREO",
+      "5-MOTORES",
+      "6-TOMBADOR PISO 01",
+      "7-TOMBADOR PISO 02",
+      "8-HILO A",
+      "9-HILO B",
+      "10-TOMBADOR TERREO",
+      "11-TOMBADOR PISO SUPERIOR",
+      "12-TERREO",
+      "13-ESCADA",
+      "14-PISO SUPERIOR",
+      "15-PISO SUPERIOR",
+    ],
+    "CALDEIRA 01": [
+      "1-TÉRREO",
+      "2-TÉRREO",
+      "3-TÉRREO",
+      "4-TÉRREO",
+      "5-TÉRREO",
+      "6-1º PISO",
+      "7-3º PISO",
+      "8-4º PISO",
+      "9-5º PISO",
+      "10-4º PISO",
+    ],
+    "VLC": ["1-TÉRREO", "2-TÉRREO"],
+    "CALDEIRA 02": [
+      "1-TÉRREO",
+      "2-TÉRREO",
+      "3-TÉRREO",
+      "4-TÉRREO",
+      "5-TÉRREO",
+      "6-TÉRREO",
+      "7-1º PISO",
+      "8-1º PISO",
+      "9-2º PISO",
+      "10-2º PISO",
+      "11-2º PISO",
+      "12-3º PISO",
+      "13-3º PISO",
+      "14-4º PISO",
+      "15-5º PISO",
+      "16-TOPO",
+      "17-TOPO",
+      "18-3º PISO",
+    ],
+    "CALDEIRA 02 CCM TÉRREO": [
+      "1-TÉRREO",
+      "2-TÉRREO",
+      "3-TÉRREO",
+      "4-1º PISO",
+      "5-1º PISO",
+      "6-1º PISO",
+      "7-1º PISO",
+      "8-1º PISO",
+      "9-1º PISO",
+      "10-1º PISO",
+      "11-1º PISO",
+    ],
+    "TRATAMENTO DE CALDO": [
+      "1-TÉRREO",
+      "2-TÉRREO",
+      "3-TÉRREO",
+      "4-TÉRREO",
+      "5-TÉRREO",
+      "6-TÉRREO",
+    ],
+    "TRATAMENTO CALDO CCM": ["1-CCM", "2-CCM", "3-CCM"],
+    "CASA DE FORÇA": [
+      "1-EXTERNO",
+      "2-EXTERNO",
+      "3-EXTERNO",
+      "4-EXTERNO",
+      "5-EXTERNO",
+      "6-EXTERNO",
+      "7-EXTERNO",
+      "8-TÉRREO",
+      "9-TÉRREO",
+      "10-TÉRREO",
+      "11-TÉRREO",
+      "12-CCM INTERNO",
+      "13-CCM INTERNO",
+      "14-SALA BATERIA EXTER",
+      "15-TÉRREO",
+      "16-TÉRREO",
+      "17-TÉRREO",
+      "18-TÉRREO",
+      "19-SALA CABOS 1º PISO",
+      "20-SALA CABOS 1º PISO",
+      "21-SALA CABOS 1º PISO",
+      "22-1º PISO",
+      "23-1º PISO",
+      "24-2º PISO",
+      "25-2º PISO",
+      "26-2º PISO",
+      "27-2º PISO",
+      "28-SALA CUBÍCULO 2 PISO",
+      "29-SALA CUBÍCULO 2 PISO",
+      "30-SALA CUBÍCULO 2 PISO",
+      "31-SALA CUBÍCULO 2 PISO",
+      "32-SALA CONTROLE 2 PISO",
+      "33-SALA CONTROLE 2 PISO",
+      "34-CASA DE FORÇA",
+      "35-CASA DE FORÇA",
+      "36-CASA DE FORÇA",
+      "37-CASA DE FORÇA",
+      "38-CASA DE FORÇA",
+    ],
+    "EVAPORAÇÃO": [
+      "1-TÉRREO",
+      "2-TÉRREO",
+      "3-TÉRREO",
+      "4-TÉRREO",
+      "5-TÉRREO",
+      "6-1º PISO",
+      "7-1º PISO",
+      "8-1º PISO",
+      "9-2º PISO",
+      "10-2º PISO",
+    ],
+    "EVAPORAÇÃO CCM": ["1-CCM", "2-CCM", "3-CCM"],
+    "FÁBRICA DE AÇÚCAR": [
+      "1-TÉRREO",
+      "2-TÉRREO",
+      "3-TÉRREO",
+      "4-1º PISO",
+      "5-1º PISO",
+      "6-1º PISO",
+      "7-1º PISO",
+      "8-2º PISO",
+      "9-2º PISO",
+      "10-2º PISO",
+    ],
+    "FERMENTAÇÃO": [
+      "1-TÉRREO",
+      "2-TÉRREO",
+      "3-TÉRREO",
+      "4-TÉRREO",
+      "5-TÉRREO",
+      "6-TÉRREO",
+      "7-PISO SUPERIOR",
+      "8-PISO SUPERIOR",
+      "9-PISO SUPERIOR",
+    ],
+    "DESTILARIA 01": [
+      "1-TÉRREO",
+      "2-TÉRREO",
+      "3-TÉRREO",
+      "4-TÉRREO",
+      "5-TÉRREO",
+      "6-TÉRREO",
+      "7-TÉRREO",
+      "8-TÉRREO",
+      "9-TÉRREO",
+      "10-1º PISO",
+      "11-TÉRREO",
+      "12-1º PISO",
+      "13-1º PISO",
+    ],
+    "DESTILARIA 02": [
+      "1-TÉRREO",
+      "2-TÉRREO",
+      "3-TÉRREO",
+      "4-TÉRREO",
+      "5-1º PISO",
+      "6-1º PISO",
+      "7-2º PISO",
+      "8-2º PISO",
+    ],
+    "DESTILARIA 01 CCM": ["1-CCM", "2-CCM", "3-CCM", "4-CCM"],
+    "CARREGAMENTO ETANOL": [
+      "1-CARREGAMENTO",
+      "2-CARREGAMENTO",
+      "3-CARREGAMENTO",
+      "4-CARREGAMENTO",
+    ],
+    "TORRE DE RESFRIAMENTO CCM": [
+      "1-TÉRREO",
+      "2-TÉRREO",
+      "3-TÉRREO",
+      "4-TÉRREO",
+      "5-TÉRREO",
+      "6-TÉRREO",
+      "7-TÉRREO",
+      "8-1º PISO",
+      "9-1º PISO",
+      "10-1º PISO",
+      "11-1º PISO",
+      "12-1º PISO",
+      "13-1º PISO",
+      "14-1º PISO",
+    ],
+    "TORRE DE RESFRIAMENTO MOTORES": [
+      "1-MOTORES",
+      "2-MOTORES",
+      "3-MOTORES",
+      "4-MOTORES",
+    ],
+    "ETA": [
+      "1-PRTS QUÍMICOS",
+      "2-ETA",
+      "3-FRENTE TORRE",
+      "4-ETA",
+      "5-FRENTE CALDEIRA",
+      "6-FRENTE BAGAÇO",
+      "7-BOMBA HID CALD",
+      "8-BOMBA HID CALD",
+      "9-BOMBA FREN BRIG",
+      "10-BOMBA FREN BRIG",
+      "11-FRENTE DEST",
+      "12-FRENTE DEST",
+    ],
+    "ETA CCM": ["1-CCM", "2-CCM", "3-CCM"],
+    "BOMBA DE INCÊNDIO": ["1-RES D'AGUA", "2-RES D'AGUA", "3-RES D'AGUA"],
+    "SUBESTAÇÃO": [
+      "1-TÉRREO",
+      "2-TÉRREO",
+      "3-TÉRREO",
+      "4-TÉRREO",
+      "5-TÉRREO",
+      "6-TÉRREO",
+      "7-TÉRREO",
+      "8-TÉRREO",
+      "9-1º PISO",
+      "10-1º PISO",
+      "11-1º PISO",
+    ],
+    "R7": ["1-EXTERNO", "2-EXTERNO", "3-EXTERNO", "4-EXTERNO"],
+    "R7 CCM": ["1-CCM", "2-CCM"],
+    "R6": ["1-EXTERNO", "2-EXTERNO", "3-EXTERNO"],
+    "R6 CCM": ["1-CCM", "2-CCM"],
+  },
+  "BP - ITUMBIARA": {
+    "POSTO": [
+      "1-ALMOXARIFADO",
+      "2-COMBUSTÍVEL",
+      "3-COMBUSTÍVEL",
+      "4-COMBUSTÍVEL BANHEIRO",
+      "5-COMBUSTÍVEL",
+      "6-COMBUSTÍVEL",
+      "7-COMBUSTÍVEL",
+      "8-COMBUSTÍVEL",
+      "9-COMBUSTÍVEL",
+      "10-COMBUSTÍVEL",
+      "11-COMBUSTÍVEL",
+      "12-COMBUSTÍVEL",
+      "13-COMBUSTÍVEL",
+      "14-COMBUSTÍVEL DEP. ÓLEO",
+      "15-COMBUSTÍVEL DEP. ÓLEO",
+    ],
+    "EXPEDIÇÃO": [
+      "16-ESCRITÓRIO",
+      "17-CHECK LIST",
+      "18-CHECK LIST",
+      "19-CHECK LIST",
+      "20-SALA DE ESPERA",
+      "21-INDUSTRIAL PORTARIA",
+      "22-ESCRITÓRIO FUNDO",
+    ],
+    "BALANÇA": ["23-ENTRADA", "24-SALA INTERNA"],
+    "PCTS": ["25-PRINCIPAL", "26-PORTA ENTRADA", "27-CHUV. EMERGÊNCIA"],
+    "ADM AGRÍCOLA": [
+      "28-RECEPÇÃO",
+      "29-RECEPÇÃO",
+      "30-EXTERNO",
+      "31-EXTERNO",
+      "32-FRENTE AO BANHEIRO",
+      "33-DOJÔ",
+      "34-INTERNO",
+      "35-ANTENA",
+    ],
+    "REFEITÓRIO": [
+      "36-SALÃO ALIMENTAÇÃO",
+      "37-SALÃO ALIMENTAÇÃO",
+      "38-COZINHA",
+      "39-COZINHA",
+      "40-COZINHA SAÍDA INTERNO",
+      "41-SAÍDA",
+      "42-EXTERNO SAÍDA",
+      "43-RECEBIMENTO MARMITEX",
+      "44-GLP",
+      "45-GLP",
+      "46-GLP",
+      "47-GLP",
+      "48-GLP",
+    ],
+    "ÁREA DE VIVÊNCIA": [
+      "49-SALA DE JOGOS",
+      "50-SALA DE JOGOS",
+      "51-SANITÁRIOS",
+    ],
+    "ADM 02": [
+      "52-AMBULATÓRIO",
+      "53-AMBULATÓRIO",
+      "54-PORTARIA LÍDER",
+      "55-BANHEIRO MASC. FUNDO",
+      "56-PORTARIA VIGILÂNCIA",
+      "57-CAMINHO REFEITÓRIO",
+      "58-IPÊ AMARELO",
+      "59-IPÊ ROSA",
+      "60-IPÊ BRANCO",
+      "61-RH",
+      "62-AMBULÂNCIA",
+      "63-SUBSTAÇÃO PORTA ENTRADA",
+    ],
+    "MANUTENÇÃO": [
+      "64-MECÂNICA",
+      "65-ELÉTRICA",
+      "66-INSTRUMENTAÇÃO",
+      "67-FERRAMENTARIA",
+      "68-FERRAMENTARIA",
+      "69-LUBRIF. FUNDO",
+    ],
+    "ALMOXARIFADO": [
+      "70-ATENDIMENTO",
+      "71-RECEB. MATERIAIS",
+      "72-FRENTE MANUTENÇÃO",
+      "73-FRENTE MANUTENÇÃO",
+      "74-PISO 01 INTERNO",
+      "75-DEP. LUBRIFICANTES",
+      "76-SALA ENGENHARIA PISO 01 INTERNO",
+      "77-SALA ENGENHARIA PISO 01 INTERNO",
+    ],
+    "COI": [
+      "78-ESTACIONAMENTO",
+      "79-SALA OPERAÇÃO",
+      "80-SALA SUPERVISÃO",
+      "81-LABORATÓRIO",
+      "82-LABORATÓRIO",
+      "83-EXTERNO FRENTE FÁBRICA AÇÚCAR",
+    ],
+    "FÁBRICA DE AÇÚCAR": [
+      "84-SECADOR AÇÚCAR",
+      "85-ABAIXO CENTRÍFUGA",
+      "86-CENTRÍFUGA CONTÍNUA",
+      "87-CENTRÍFUGA AUTOMÁTICA",
+      "88-LADO TANQUE XAROPE",
+      "89-LADO TANQUE MEL POBRE",
+      "90-1º PISO",
+      "91-1º PISO",
+      "92-1º PISO",
+      "93-2º PISO",
+      "94-2º PISO",
+      "95-2º PISO",
+      "96-CCM",
+      "97-CCM",
+      "98-CCM",
+      "99-CCM",
+    ],
+    "ARMAZÉM": [
+      "100-AÇÚCAR FRENTE FÁBRICA",
+      "101-AÇÚCAR FRENTE FÁBRICA",
+      "102-AÇÚCAR FRENTE COE",
+      "103-AÇÚCAR 1º PISO ESCADA",
+      "104-AÇÚCAR 2º PISO",
+      "105-AÇÚCAR 3º PISO",
+      "106-AÇÚCAR ENVASE",
+      "107-AÇÚCAR ENVASE",
+      "108-AÇÚCAR SILO 1 PISO SUPERIOR",
+    ],
+    "DESTILARIA": [
+      "109-TÉRREO",
+      "110-TÉRREO",
+      "111-TÉRREO",
+      "112-TÉRREO",
+      "113-TÉRREO",
+      "114-PISO SUPERIOR",
+      "115-PRODUTOS QUÍMICA",
+      "116-PRODUTOS QUÍMICA",
+    ],
+    "FERMENTAÇÃO": [
+      "117-ENTRADA",
+      "118-CUBA 1",
+      "119-CCM",
+      "120-DORNA PULMÃO",
+      "121-CUBA 3",
+      "122-DORNA VOLANTE",
+      "123-DORNA 2",
+      "124-DORNA 1",
+      "125-CASA DE FERMENTAÇÃO",
+      "126-DORNA 4",
+      "127-DORNA 4",
+      "128-DORNA 5",
+      "129-DORNA 7",
+      "130-DORNA 6",
+      "131-1º PISO",
+      "132-2º PISO",
+      "133-2º PISO",
+      "134-2º PISO",
+      "135-CENTRÍFUGA 3º PISO",
+      "136-CENTRÍFUGA 3º PISO",
+    ],
+    "DIFUSOR": [
+      "137-TÉRREO",
+      "138-TÉRREO",
+      "139-TÉRREO",
+      "140-TÉRREO",
+      "141-TÉRREO",
+      "142-TÉRREO",
+      "143-TÉRREO",
+      "144-TÉRREO",
+      "145-1º PISO",
+      "146-1º PISO",
+      "147-2º PISO",
+      "148-2º PISO",
+      "149-3º PISO",
+      "150-CCM",
+      "151-CCM",
+      "152-CCM",
+      "153-EXTRAÇÃO DE CALDO",
+      "154-EXTRAÇÃO DE CALDO",
+      "155-EXTRAÇÃO DE CALDO PISO 1",
+      "156-EXTRAÇÃO DE CALDO PISO 1",
+    ],
+    "CALDEIRA": [
+      "157-TÉRREO",
+      "158-TÉRREO",
+      "159-TÉRREO",
+      "160-TÉRREO",
+      "161-TÉRREO",
+      "162-TÉRREO",
+      "163-TÉRREO",
+      "164-TÉRREO",
+      "165-1º PISO",
+      "166-2º PISO DISTRIBUIDORA",
+      "167-3º PISO",
+      "168-4º PISO",
+      "169-5º PISO",
+      "170-6º PISO",
+      "171-TETO 7º PISO",
+      "172-DESAERADOR 1 8º PISO",
+      "173-TÉRREO MOTORES",
+      "174-DESAERADOR 1º PISO",
+      "175-DESAERADOR 2º PISO",
+      "176-TÉRREO",
+      "177-TÉRREO",
+    ],
+    "CCM DA CALDEIRA": ["178-CCM", "179-CCM", "180-CCM", "181-CCM"],
+    "CASA DE FORÇA": [
+      "182-TÉRREO EXTERNO",
+      "183-TÉRREO EXTERNO",
+      "184-TÉRREO EXTERNO",
+      "185-TÉRREO EXTERNO",
+      "186-TÉRREO EXTERNO",
+      "187-GERADOR DIESEL",
+      "188-GERADOR DIESEL",
+      "189-TÉRREO INTERNO",
+      "190-TÉRREO INTERNO",
+      "191-TÉRREO INTERNO",
+      "192-TÉRREO INTERNO",
+      "193-1º PISO",
+      "194-1º PISO",
+      "195-1º PISO",
+      "196-1º PISO SALA DE SURTO",
+      "197-1º PISO SALA DE SURTO",
+      "198-2º PISO ESCADA",
+      "199-2º PISO",
+      "200-2º PISO",
+      "201-2º PISO",
+      "202-2º PISO CUBÍCULO",
+      "203-2º PISO CUBÍCULO",
+      "204-2º PISO",
+    ],
+    "ETA": [
+      "205-CASA ETA",
+      "206-ETE CONVENCIONAL",
+      "207-TANQUE ÁGUA FILTRADA",
+      "208-TANQUE DE OSMOSE BOMBA INCÊNDIO",
+      "209-DEPÓSITO DE GALÕES",
+      "210-DEPÓSITO DE GALÕES",
+      "211-CCM LADO TANQUE INCÊNDIO",
+      "212-CCM LADO TANQUE INCÊNDIO",
+      "213-CCM LADO PÁTIO BAGAÇO",
+      "214-CCM LADO PÁTIO BAGAÇO",
+    ],
+    "EVAPORAÇÃO": [
+      "215-TÉRREO",
+      "216-TÉRREO",
+      "217-TÉRREO",
+      "218-TÉRREO",
+      "219-TÉRREO",
+      "220-TÉRREO",
+      "221-TÉRREO",
+      "222-1º PISO",
+      "223-1º PISO",
+      "224-1º PISO",
+      "225-1º PISO",
+      "226-1º PISO",
+      "227-1º PISO",
+      "228-2º PISO",
+      "229-2º PISO",
+      "230-2º PISO",
+      "231-2º PISO",
+      "232-2º PISO",
+      "233-2º PISO",
+      "234-CCM",
+      "235-CCM",
+    ],
+    "TRATAMENTO DE CALDO": [
+      "236-TANQUE DOSADO",
+      "237-TANQUE ENXOFREIRA",
+      "238-TANQUE COND.",
+      "239-COLUNA DECANT. ÁLCOOL",
+      "240-TANQUE ÁGUA",
+      "241-TANQUE DE LODO",
+      "242-TANQUE DE POLINO",
+      "243-COLUNA DECANT. AÇÚCAR",
+    ],
+    "TORRE DE RESFRIAMENTO": [
+      "244-CAIEIRA",
+      "245-LADO BOMBA INCÊNDIO",
+      "246-MOTORES",
+      "247-MOTORES",
+      "248-TORRE",
+      "249-TORRE",
+      "250-VINHAÇA",
+      "251-VINHAÇA",
+    ],
+    "VLC": [
+      "252-TÉRREO B. CONTENÇÃO",
+      "253-ÁREA DOS CAMINHÕES",
+      "254-PISO SUPERIOR",
+      "255-CCM TÉRREO LADO DIFUSOR",
+      "256-CCM ESCADA LADO DIFUSOR",
+      "257-CCM TÉRREO LADO VLC",
+      "258-CCM ESCADA LADO VLC",
+    ],
+    "CENTRAL DE RESÍDUOS": [
+      "259-CENTRAL",
+      "260-CENTRAL",
+      "261-TAMBOR E BOMBINAS",
+      "262-PRODUTOS QUÍMICOS",
+      "263-TANQUE",
+    ],
+    "CARREGAMENTO DE ÁLCOOL": ["264-CARREGAMENTO", "265-CASA DO MOTORISTA"],
+    "TANQUE DE ÁLCOOL": [
+      "266-HIDRANTE 35",
+      "267-HIDRANTE 35",
+      "268-HIDRANTE 36",
+      "269-HIDRANTE 36",
+      "270-HIDRANTE 37",
+      "271-HIDRANTE 37",
+      "272-HIDRANTE 43",
+    ],
+    "DEFENSIVOS AGRÍCOLAS": [
+      "273-DEFENSIVOS",
+      "274-DEFENSIVOS",
+      "275-DEFENSIVOS",
+      "276-DEFENSIVOS",
+      "277-DEFENSIVOS",
+      "278-DEFENSIVOS",
+      "279-DEFENSIVOS",
+      "280-DEFENSIVOS",
+      "281-DEFENSIVOS",
+      "282-DEFENSIVOS",
+      "283-DEFENSIVOS",
+      "284-DEFENSIVOS",
+      "285-INTERNO",
+    ],
+    "OFICINA": [
+      "286-LAVADOR",
+      "287-LADO LAVADOR",
+      "288-TROCA DE ÓLEO",
+      "289-TROCA DE ÓLEO",
+      "290-FUNDO DEP. PNEUS",
+      "291-FUNDO DEP. PNEUS",
+      "292-PCM EXTERNO",
+      "293-PCM EXTERNO",
+      "294-PCM EXTERNO",
+      "295-PCM INTERNO",
+      "296-PCM INTERNO",
+      "297-ALMOXARIFADO",
+      "298-MANUTENÇÃO MÁQUINAS AGRÍCOLA",
+      "299-MANUTENÇÃO IMPLEMENTOS",
+      "300-MANUTENÇÃO LADO HIDRANTE 35",
+      "301-ALINHAMENTO",
+      "302-CALDEIRARIA",
+      "303-OXIGÊNIO LADO CALDEIRARIA",
+      "304-COMPRESSOR DE AR",
+      "305-TENDA MANUTENÇÃO",
+      "306-TENDA MANUTENÇÃO",
+      "307-TENDA MANUTENÇÃO",
+      "308-TENDA MANUTENÇÃO",
+      "309-TENDA MANUTENÇÃO",
+      "310-TENDA MANUTENÇÃO",
+      "311-TENDA MANUTENÇÃO",
+      "312-TENDA MANUTENÇÃO",
+      "313-FUNELÁRIA FUNDO TENDA",
+      "314-FUNELÁRIA FUNDO TENDA",
+      "315-FUNELÁRIA FUNDO TENDA",
+      "316-FUNELÁRIA FUNDO TENDA",
+      "317-TRATAMENTO DE ESGOTO FUNDO OFICINA",
+      "318-R 0",
+      "319-R 0",
+    ],
+  },
+  "BP - ITUIUTABA": {
+    "ADM": [
+      "1-01 INTERNO",
+      "2-01 INTERNO",
+      "3-01 SALA TAMANDUÁ BANDEIRA",
+      "4-01 RH EXTERNO",
+      "5-SALA DOJÔ",
+      "6-02 PORTARIA",
+      "7-02 CATRACA",
+      "8-02 ARARA CANINDÉ",
+      "9-SEGURANÇA DO TRABALHO",
+      "10-AMBULATÓRIO MÉDICO",
+      "11-AMBULATÓRIO MÉDICO INTERNO",
+    ],
+    "REFEITÓRIO": [
+      "1-SALÃO ALIMENTAÇÃO",
+      "2-SALÃO ALIMENTAÇÃO",
+      "3-COZINHA",
+      "4-SAÍDA",
+      "5-GLP",
+      "6-GLP",
+      "7-EXTERNO",
+    ],
+    "ÁREA DE VIVÊNCIA": ["1-PRINCIPAL"],
+    "INSTRUMENTAÇÃO": ["1-INTERNO", "2-EXTERNO"],
+    "MANUTENÇÃO": ["1-ELÉTRICA", "2-MECÂNICA", "3-MECÂNICA", "4-MECÂNICA"],
+    "ALMOXARIFADO": [
+      "1-INTERNO",
+      "2-INTERNO",
+      "3-INTERNO",
+      "4-INTERNO",
+      "5-DEPÓSITO DE ÓLEO",
+    ],
+    "COI": [
+      "1-INTERNO",
+      "2-INTERNO",
+      "3-LABORATÓRIO",
+      "4-EXTERNO",
+      "5-EXTERNO",
+    ],
+    "CONTAINER": ["1-PRINCIPAL"],
+    "BARRACÃO DE AÇÚCAR": [
+      "1-PRINCIPAL",
+      "2-PISO 01",
+      "3-PISO 02",
+      "4-PISO 03",
+      "5-PISO 01",
+      "6-DESENSAQUE PISO 01",
+      "7-SAÍDA CAMINHÃO",
+      "8-ENTRADA CAMINHÃO",
+      "9-TENDA",
+      "10-TENDA",
+      "11-TENDA",
+      "12-TENDA",
+      "13-TENDA",
+      "14-ENTRADA",
+      "15-ENVASE",
+      "16-ENVASE",
+      "17-TENDA EXTERNO",
+    ],
+    "FÁBRICA DE AÇÚCAR": [
+      "1-FÁBRICA",
+      "2-TÉRREO",
+      "3-TÉRREO",
+      "4-TÉRREO",
+      "5-CENTRÍFUGA",
+      "6-CENTRÍFUGA",
+      "7-PISO 01",
+      "8-PISO 01",
+      "9-PISO 01",
+      "10-PISO 02",
+      "11-PISO 02",
+      "12-PISO 02",
+      "13-PISO 02",
+      "14-CCM EXTERNO",
+      "15-CCM EXTERNO",
+      "16-CCM EXTERNO",
+      "17-CCM EXTERNO",
+      "18-FRENTE CCM",
+    ],
+    "DIFUSOR": [
+      "1-HILO A",
+      "2-HILO B",
+      "3-TÉRREO",
+      "4-TÉRREO",
+      "5-TÉRREO",
+      "6-TÉRREO",
+      "7-CCM EXTERNO",
+      "8-CCM EXTERNO",
+      "9-CCM EXTERNO",
+      "10-CCM EXTERNO",
+    ],
+    "SUBESTAÇÃO": [
+      "1-EXTERNO",
+      "2-EXTERNO",
+      "3-EXTERNO",
+      "4-EXTERNO",
+      "5-EXTERNO",
+      "6-INTERNO",
+      "7-INTERNO",
+    ],
+    "CASA DE FORÇA": [
+      "1-INTERNO",
+      "2-INTERNO",
+      "3-INTERNO",
+      "4-CCM 3.1",
+      "5-GERADOR DIESEL INTERNO",
+      "6-SALA COMPRESSOR",
+      "7-PISO 2",
+      "8-PISO 2",
+      "9-PISO 2",
+      "10-PISO 2",
+      "11-SALA CALOR",
+      "12-SALA CONTROLE",
+      "13-PISO 3",
+      "14-PISO 3",
+      "15-PISO 3",
+      "16-PISO 3",
+      "17-PISO 3",
+      "18-PISO 3",
+      "19-PISO 3",
+    ],
+    "CALDEIRA": [
+      "1-TÉRREO",
+      "2-TÉRREO",
+      "3-TÉRREO",
+      "4-TÉRREO",
+      "5-TÉRREO",
+      "6-PISO 3",
+      "7-DESAERADOR",
+      "8-CCM",
+      "9-CCM",
+      "10-CCM",
+      "11-CCM",
+      "12-CCM",
+    ],
+    "VLC": ["1-CCM", "2-ESCADA CCM", "3-CCM", "4-ESCADA CCM"],
+    "EVAPORAÇÃO": [
+      "1-TÉRREO",
+      "2-TÉRREO",
+      "3-TÉRREO",
+      "4-TÉRREO",
+      "5-PISO 01",
+      "6-PISO 01",
+      "7-PISO 01",
+      "8-PISO 02",
+      "9-PISO 02",
+      "10-PISO 02",
+      "11-PISO 02",
+      "12-PISO 02",
+      "13-PISO 02",
+      "14-CCM",
+      "15-CCM",
+      "16-CCM",
+      "17-CCM",
+    ],
+    "TRATAMENTO DE CALDO": [
+      "1-TÉRREO",
+      "2-TÉRREO",
+      "3-TÉRREO",
+      "4-PISO 01",
+      "5-PISO 01",
+      "6-PISO 01",
+      "7-PISO 02",
+      "8-PISO 03",
+      "9-PISO 03",
+      "10-PISO 03",
+    ],
+    "CAIEIRA": ["1-PRINCIPAL", "2-PRINCIPAL"],
+    "FERMENTAÇÃO": [
+      "1-TÉRREO",
+      "2-TÉRREO",
+      "3-TÉRREO",
+      "4-TÉRREO",
+      "5-TÉRREO",
+      "6-TÉRREO",
+      "7-PISO 01",
+      "8-PISO 02",
+      "9-PISO 03",
+      "10-CCM",
+      "11-CCM",
+      "12-CCM",
+    ],
+    "DESTILARIA": [
+      "1-TÉRREO",
+      "2-TÉRREO",
+      "3-TÉRREO",
+      "4-PISO 01",
+      "5-PISO 01",
+      "6-PRODUTOS QUÍMICOS",
+    ],
+    "TENDA PRODUTOS QUÍMICOS": ["1-PRINCIPAL", "2-PRINCIPAL"],
+    "ETA": [
+      "1-INSUMOS",
+      "2-CCM TÉRREO",
+      "3-CCM TÉRREO",
+      "4-CCM ESCADA",
+      "5-CCM ESCADA",
+    ],
+    "TORRE DE RESFRIAMENTO": ["1-PRINCIPAL", "2-PRINCIPAL"],
+    "CARREGAMENTO DE ETANOL": [
+      "1-ESCRITÓRIO",
+      "2-VIVÊNCIA",
+      "3-PLATAFORMA 01",
+      "4-PLATAFORMA 02",
+    ],
+    "OFICINA": [
+      "1-ESCRITÓRIO PISO 01",
+      "2-TÉRREO",
+      "3-DEPÓSITO DE PNEUS",
+      "4-DEPÓSITO DE PNEUS EXTERNO",
+      "5-SANITÁRIO",
+      "6-HIDRÁULICA",
+      "7-ALMOXARIFADO",
+      "8-ALMOXARIFADO",
+      "9-MANUTENÇÃO",
+      "10-MANUTENÇÃO",
+      "11-MANUTENÇÃO",
+      "12-BORRACHARIA",
+      "13-SOLDA",
+      "14-COMPRESSOR",
+      "15-BORRACHARIA",
+      "16-MANUTENÇÃO",
+      "17-MANUTENÇÃO",
+      "18-BORRACHARIA",
+      "19-TROCA DE ÓLEO",
+      "20-LAVADOR",
+      "21-LAVA A JATO",
+      "22-TROCA DE ÓLEO",
+    ],
+    "DEPÓSITO DE INSUMOS": [
+      "1-INTERNO",
+      "2-EXTERNO",
+      "3-EXTERNO",
+      "4-EXTERNO",
+      "5-EXTERNO",
+    ],
+    "PCTS": ["1-INTERNO"],
+    "BALANÇA": ["1-INTERNO"],
+    "EXPEDIÇÃO": ["1-PORTARIA", "2-EXTERNO", "3-EXTERNO", "4-EXTERNO"],
+    "POSTO": [
+      "1-ALMOXARIFADO",
+      "2-BANHEIRO",
+      "3-ESCRITÓRIO",
+      "4-BOMBA 03",
+      "5-BOMBA 05",
+      "6-BOMBA 06",
+      "7-PRINCIPAL",
+      "8-PRINCIPAL",
+    ],
+    "ANTENA": ["1-PRINCIPAL", "2-PRINCIPAL"],
+    "ETE": ["1-CAPTAÇÃO CCM", "2-CAPTAÇÃO OFICINA", "3-CAPTAÇÃO ESCRITÓRIO"],
+    "VIVEIRO": ["1-MEIO AMBIENTE", "2-MEIO AMBIENTE"],
+    "CENTRAL DE RESÍDUOS": ["1-CENTRAL", "2-CENTRAL"],
+  },
+  "BP - ITAPAGIPE": {
+    "ÁREA DE VIVÊNCIA": [
+      "1-PRINCIPAL",
+      "2-PRINCIPAL",
+      "3-PRINCIPAL",
+      "4-PARTE DE TRÁS",
+      "5-PARTE DE TRÁS",
+    ],
+    "REFEITÓRIO": [
+      "1-COZINHA",
+      "2-COZINHA FUNDO",
+      "3-GLP",
+      "4-GLP",
+      "5-INTERNO",
+      "6-INTERNO",
+    ],
+    "SALA DE TREINAMENTO": ["1-PRINCIPAL"],
+    "AMBULATÓRIO": ["1-PRINCIPAL", "2-VESTIÁRIO"],
+    "ADM": ["1-RH", "2-PRINCIPAL", "3-PRINCIPAL"],
+    "ALMOXARIFADO": [
+      "1-INTERNO",
+      "2-INTERNO",
+      "3-INTERNO",
+      "4-1 F",
+      "5-DEPÓSITO 1 C",
+      "6-DEPÓSITO 1 C",
+      "7-DEPÓSITO 1 C",
+      "8-DEPÓSITO DE INSUMOS",
+      "9-DEPÓSITO DE INSUMOS",
+      "10-CALDEIRARIA",
+      "11-CALDEIRARIA",
+    ],
+    "FÁBRICA DE AÇÚCAR": [
+      "1-PRINCIPAL",
+      "2-PRINCIPAL",
+      "3-PRINCIPAL",
+      "4-PRINCIPAL",
+      "5-PRINCIPAL",
+      "6-PRINCIPAL",
+      "7-PRINCIPAL",
+      "8-2º PISO",
+      "9-2º PISO",
+      "10-3º PISO",
+    ],
+    "OFICINA AGRÍCOLA": [
+      "1-PORTARIA",
+      "2-COPA",
+      "3-2º PISO",
+      "4-2º PISO",
+      "5-OFICINA",
+      "6-OFICINA",
+      "7-OFICINA",
+      "8-OFICINA",
+      "9-OFICINA",
+      "10-CALDEIRARIA",
+      "11-CALDEIRARIA",
+      "12-CALDEIRARIA",
+      "13-CALDEIRARIA AGREGADOS",
+      "14-OFICINA DE COLHEITADEIRA",
+      "15-OFICINA DE COLHEITADEIRA",
+      "16-LAVA A JATO",
+      "17-BORRACHARIA",
+      "18-LUBRIFICAÇÃO",
+    ],
+    "POSTO": [
+      "1-PRINCIPAL",
+      "2-PRINCIPAL",
+      "3-PRINCIPAL",
+      "4-PRINCIPAL",
+      "5-PRINCIPAL",
+    ],
+    "PORTARIA": ["1-PRINCIPAL"],
+    "BALANÇA": ["1-PRINCIPAL"],
+    "VIVÊNCIA MOTORISTA": ["1-PRINCIPAL"],
+    "LABORATÓRIO PCTS": ["1-PRINCIPAL", "2-PRINCIPAL"],
+    "VINHAÇA": [
+      "1-RESÍDUOS",
+      "2-RESÍDUOS 3º PISO",
+      "3-CARREGAMENTO",
+      "4-SANITÁRIOS",
+    ],
+    "CENTRAL DE RESÍDUOS": [
+      "1-PRINCIPAL",
+      "2-PRINCIPAL",
+      "3-PRINCIPAL",
+      "4-PRINCIPAL",
+      "5-PRINCIPAL",
+      "6-PRINCIPAL",
+      "7-PRINCIPAL",
+      "8-PRINCIPAL",
+      "9-PRINCIPAL",
+    ],
+    "MOENDA": ["1-TOMBADOR", "2-PRINCIPAL", "3-PRINCIPAL", "4-PISO 2"],
+    "ETA": ["1-PRINCIPAL"],
+    "CALDEIRA": [
+      "1-SALA BRIGADA",
+      "2-LADO BAGAÇO",
+      "3-LADO BAGAÇO",
+      "4-LADO BAGAÇO",
+    ],
+    "TRATAMENTO DE CALDO": [
+      "1-PRINCIPAL",
+      "2-PRINCIPAL",
+      "3-3º PISO",
+      "4-3º PISO",
+      "5-LADO BAGAÇO",
+      "6-LADO BAGAÇO",
+      "7-LADO BAGAÇO 3º PISO",
+    ],
+    "ARMAZÉM DE AÇÚCAR": [
+      "1-PRINCIPAL",
+      "2-CARREGAMENTO",
+      "3-INTERNO",
+      "4-INTERNO",
+      "5-INTERNO",
+      "6-INTERNO",
+      "7-INTERNO",
+    ],
+    "COI": ["1-PRINCIPAL", "2-LABORATÓRIO"],
+    "CARREGAMENTO DE ETANOL": ["1-PRINCIPAL", "2-PRINCIPAL"],
+    "FERMENTAÇÃO": ["1-PRINCIPAL", "2-PRINCIPAL", "3-PRINCIPAL", "4-PISO 3"],
+    "DESTILARIA": ["1-DESCARREG. PRODUTO QUÍMICO", "2-PRINCIPAL"],
+    "OFICINA INDÚSTRIA": [
+      "1-PRINCIPAL",
+      "2-PRINCIPAL",
+      "3-PISO 2",
+      "4-EXTERNO",
+      "5-PRINCIPAL",
+      "6-PRINCIPAL",
+      "7-LUBRIFICAÇÃO",
+      "8-LUBRIFICAÇÃO",
+      "9-LADO LUBRIFICAÇÃO INTERNO",
+    ],
+    "CASA DE FORÇA": [
+      "1-PRINCIPAL",
+      "2-PRINCIPAL",
+      "3-PRINCIPAL",
+      "4-PRINCIPAL",
+      "5-PRINCIPAL",
+      "6-PRINCIPAL",
+    ],
+    "CCM ETA": ["1-PRINCIPAL", "2-PRINCIPAL", "3-SALA DO SUPERVISOR"],
+    "CCM DA CALDEIRA": ["1-PRINCIPAL"],
+    "CCM DA DESTILARIA": ["1-PRINCIPAL"],
+    "CCM FÁBRICA DE AÇÚCAR": ["1-PRINCIPAL", "2-PRINCIPAL", "3-PRINCIPAL"],
+    "CCM PREPARO DE CALDO": ["1-PRINCIPAL", "2-PRINCIPAL"],
+    "CCM VINHAÇA": ["1-PRINCIPAL"],
+    "VLC": ["1-CCM", "2-CCM", "3-CCM", "4-PRINCIPAL", "5-PISO 2"],
+  },
+  "BP - FRUTAL": {
+    "ADM": [
+      "1-SEG. TRABALHO BEBEDOURO",
+      "2-SEGURANÇA DO TRABALHO",
+      "3-SEGURANÇA DO TRABALHO",
+      "4-ESCRITÓRIO",
+      "5-SANITÁRIOS",
+      "6-RH",
+      "7-TORRE T.I",
+      "8-PRINCIPAL",
+      "9-PRINCIPAL",
+    ],
+    "VIVÊNCIA": ["1-PRINCIPAL", "2-PRINCIPAL"],
+    "REFEITÓRIO": [
+      "1-ENTRADA",
+      "2-CATRACA",
+      "3-COZINHA",
+      "4-DEPÓSITO",
+      "5-ESTAÇÃO DE GÁS",
+      "6-ESTAÇÃO DE GÁS",
+      "7-SAÍDA",
+    ],
+    "ÁREA AGRÍCOLA": [
+      "1-ADM",
+      "2-ADM PISO 2",
+      "3-SALA DE ARQUIVOS",
+      "4-SALA TREINAMENTO",
+      "5-CALÇADA",
+      "6-PLANEJAMENTO",
+      "7-FERRAMENTARIA",
+      "8-OFICINA BOX 05",
+      "9-OFICINA LADO BOX 05",
+      "10-OFICINA BOX 08",
+      "11-OFICINA BOX 24",
+      "12-OFICINA BOX 29",
+      "13-CALDEIRARIA AUTOMOTIVA",
+      "14-CALDEIRARIA AUTOMOTIVA",
+      "15-CCM",
+      "16-LAVADOR",
+      "17-LAVADOR",
+      "18-DEPÓSITO DE PNEUS",
+      "19-BORRACHARIA",
+      "20-AUTOMAÇÃO",
+    ],
+    "POSTO": [
+      "1-PRINCIPAL",
+      "2-PRINCIPAL",
+      "3-PRINCIPAL",
+      "4-PRINCIPAL",
+      "5-PRINCIPAL",
+    ],
+    "CONTROLE": ["1-PRINCIPAL"],
+    "PORTARIA": ["1-PRINCIPAL"],
+    "ALMOXARIFADO": [
+      "1-INTERNO",
+      "2-INTERNO",
+      "3-EXTERNO",
+      "4-EXTERNO",
+      "5-EXTERNO",
+      "6-EXTERNO",
+      "7-BARRACÃO",
+      "8-BARRACÃO",
+      "9-BARRACÃO",
+      "10-DEPÓSITO DE GÁS",
+      "11-DEPÓSITO DE GÁS",
+    ],
+    "ESCRITÓRIO INDUSTRIAL": ["1-ESCRITÓRIO", "2-LABORATÓRIO"],
+    "INSTRUMENTAÇÃO / MECÂNICA": [
+      "1-INSTRUMENTAÇÃO",
+      "2-INSTRUMENTAÇÃO",
+      "3-MECÂNICA",
+      "4-MECÂNICA",
+    ],
+    "DIFUSOR": [
+      "1-MOENDA",
+      "2-TOMBADOR",
+      "3-MOENDA CAVALETE",
+      "4-MOENDA CAVALETE",
+      "5-MOENDA CAVALETE",
+      "6-MOENDA CAVALETE",
+      "7-CCM",
+      "8-CCM",
+      "9-CCM",
+      "10-PISO 02",
+      "11-MOENDA BAGAÇO",
+      "12-MOENDA",
+      "13-CCM HILO",
+      "14-MOEGA",
+    ],
+    "CALDEIRA": [
+      "1-PRINCIPAL",
+      "2-PRINCIPAL",
+      "3-PISO 2",
+      "4-PISO 3",
+      "5-CAVALETE",
+      "6-CAVALETE",
+      "7-CAVALETE",
+      "8-CAVALETE",
+      "9-CCM",
+      "10-CCM",
+      "11-CASA DE BRIGADA",
+    ],
+    "VLC": ["1-TÉRREO", "2-PISO 1"],
+    "CASA DE BOMBAS": [
+      "1-CCM",
+      "2-CCM",
+      "3-CCM",
+      "4-INTERNO",
+      "5-INTERNO",
+      "6-INTERNO",
+      "7-INTERNO",
+      "8-INTERNO",
+      "9-EXTERNO",
+      "10-EXTERNO",
+      "11-EXTERNO",
+      "12-EXTERNO",
+      "13-FERTIRRIGAÇÃO",
+      "14-TRATAMENTO DE ESGOTO",
+    ],
+    "FERMENTAÇÃO": [
+      "1-CCM",
+      "2-CCM",
+      "3-CCM",
+      "4-CCM",
+      "5-PRINCIPAL",
+      "6-PRINCIPAL",
+      "7-PRINCIPAL",
+      "8-CAVALETE",
+      "9-CAVALETE",
+      "10-CAVALETE",
+      "11-CAVALETE",
+      "12-ÚLTIMO PISO",
+    ],
+    "BARRACÃO DE AÇÚCAR": [
+      "1-ARMAZÉM FRENTE CASA BOMBA",
+      "2-ARMAZÉM FRENTE CASA BOMBA",
+      "3-ARMAZÉM FRENTE FÁBRICA",
+      "4-ARMAZÉM FRENTE FÁBRICA",
+      "5-ARMAZÉM LE",
+      "6-ARMAZÉM FRENTE LE",
+      "7-ARMAZÉM LE",
+      "8-ARMAZÉM LE",
+      "9-ARMAZÉM FUNDO",
+      "10-ARMAZÉM FUNDO",
+      "11-ARMAZÉM INTERNO",
+      "12-FÁBRICA CCM",
+      "13-FÁBRICA CCM",
+      "14-FÁBRICA CCM",
+      "15-FÁBRICA CCM",
+    ],
+    "CARREGAMENTO DE ETANOL": [
+      "1-PRINCIPAL",
+      "2-PRINCIPAL",
+      "3-PRINCIPAL",
+      "4-PRINCIPAL",
+      "5-CCM",
+    ],
+    "GERADOR DIESEL": [
+      "1-PRINCIPAL",
+      "2-PRINCIPAL",
+      "3-PRINCIPAL",
+      "4-INTERNO",
+      "5-INTERNO",
+      "6-INTERNO",
+    ],
+    "CASA DE FORÇA": [
+      "1-EXTERNO",
+      "2-EXTERNO",
+      "3-INTERNO",
+      "4-INTERNO",
+      "5-INTERNO",
+      "6-INTERNO",
+      "7-INTERNO",
+    ],
+    "DESTILARIA": [
+      "1-PRINCIPAL",
+      "2-PRINCIPAL",
+      "3-PRINCIPAL",
+      "4-PRINCIPAL",
+      "5-PRINCIPAL",
+      "6-CAVALETE",
+      "7-CAVALETE",
+      "8-CAVALETE",
+      "9-CAVALETE",
+    ],
+    "TRATAMENTO DE CALDO": [
+      "1-CCM",
+      "2-CCM",
+      "3-CCM",
+      "4-PRINCIPAL",
+      "5-CAVALETE",
+      "6-CAVALETE",
+      "7-CAVALETE",
+      "8-CAVALETE",
+    ],
+    "FÁBRICA DE AÇÚCAR": [
+      "1-TÉRREO",
+      "2-FRENTE DESTILARIA",
+      "3-FRENTE DESTILARIA",
+      "4-TÉRREO",
+      "5-TÉRREO",
+      "6-TÉRREO",
+      "7-TÉRREO",
+      "8-PISO 02",
+      "9-PISO 03",
+    ],
+    "INSUMOS AGRÍCOLAS": [
+      "1-DEPÓSITO",
+      "2-DEPÓSITO",
+      "3-DEPÓSITO",
+      "4-DEPÓSITO",
+    ],
+    "ETA": ["1-PRINCIPAL", "2-CCM", "3-CCM", "4-CCM"],
+    "LABORATÓRIO PCTS": ["1-PRINCIPAL", "2-PRINCIPAL"],
+    "VIVÊNCIA MOTORISTA": ["1-PRINCIPAL"],
+    "BALANÇA": ["1-PRINCIPAL"],
+    "CENTRAL DE RESÍDUOS": ["1-PRINCIPAL", "2-PRINCIPAL", "3-PRINCIPAL"],
+    "LGE": [
+      "1-PRINCIPAL",
+      "2-PRINCIPAL",
+      "3-PRINCIPAL",
+      "4-PRINCIPAL",
+      "5-PRINCIPAL",
+      "6-PRINCIPAL",
+    ],
+  },
+  "BP - SANTA JULIANA": {
+    "RH": [
+      "1-PORTA EXTERNO",
+      "2-INTERNO",
+      "3-SANITÁRIOS",
+      "4-INTERNO 2º PISO",
+      "5-INTERNO 2º PISO",
+      "6-INTERNO 2º PISO",
+    ],
+    "ALMOXARIFADO": [
+      "1-INTERNO",
+      "2-INTERNO",
+      "3-INTERNO",
+      "4-INTERNO",
+      "5-INTERNO PISO 01",
+      "6-INTERNO",
+      "7-INTERNO",
+      "8-INTERNO",
+      "9-EXTERNO PÁTIO",
+      "10-EXTERNO PÁTIO",
+      "11-EXTERNO PÁTIO",
+      "12-EXTERNO PÁTIO",
+      "13-EXTERNO",
+    ],
+    "DEPÓSITO DE LIXO": ["1-PRINCIPAL", "2-PRINCIPAL"],
+    "DEPÓSITO DE GÁS": ["1-PRINCIPAL", "2-PRINCIPAL", "3-ADM"],
+    "CALDA PRONTA": [
+      "1-TÉRREO",
+      "2-PISO 1",
+      "3-TÉRREO",
+      "4-PÁTIO",
+      "5-PÁTIO",
+      "6-PÁTIO",
+    ],
+    "OFICINA MANUTENÇÃO": [
+      "1-PISO 01",
+      "2-TÉRREO",
+      "3-MECÂNICA TÉRREO",
+      "4-MECÂNICA TÉRREO",
+      "5-CALDEIRARIA",
+      "6-CALDEIRARIA",
+      "7-EXTERNO",
+    ],
+    "SEGURANÇA DO TRABALHO": ["1-PRINCIPAL", "2-PRINCIPAL", "3-PRINCIPAL"],
+    "VESTIÁRIO PORTARIA": [
+      "1-PORTARIA EXTERNO",
+      "2-SALA DE TREINAMENTO",
+      "3-PRINCIPAL",
+      "4-PRINCIPAL",
+      "5-PRINCIPAL",
+    ],
+    "REFEITÓRIO": [
+      "1-INTERNO",
+      "2-INTERNO",
+      "3-INTERNO",
+      "4-COZINHA",
+      "5-CCM",
+      "6-CCM",
+      "7-GLP",
+      "8-GLP",
+    ],
+    "DOJÔ": ["1-SALINHA", "2-AGRÍCOLA", "3-AGRÍCOLA", "4-INDÚSTRIA"],
+    "LABORATÓRIO PCTS": [
+      "1-INTERNO",
+      "2-INTERNO",
+      "3-INTERNO",
+      "4-INTERNO",
+      "5-INTERNO",
+      "6-INTERNO",
+      "7-EXTERNO",
+      "8-EXTERNO",
+    ],
+    "PORTARIA": ["1-PRINCIPAL"],
+    "VIVÊNCIA": ["1-PRINCIPAL"],
+    "BALANÇA": ["1-PRINCIPAL", "2-INTERNO"],
+    "POSTO": [
+      "1-DIESEL",
+      "2-DIESEL",
+      "3-DIESEL",
+      "4-PRINCIPAL",
+      "5-PRINCIPAL",
+      "6-ESCRITÓRIO",
+      "7-PRINCIPAL",
+      "8-PRINCIPAL",
+      "9-PRINCIPAL",
+      "10-PRINCIPAL",
+      "11-PRINCIPAL",
+      "12-PRINCIPAL",
+    ],
+    "TORRE DA FÁBRICA": [
+      "1-CCM",
+      "2-CCM",
+      "3-CCM",
+      "4-CCM",
+      "5-CCM 2º PISO",
+      "6-CCM 2º PISO",
+      "7-PRINCIPAL",
+      "8-PRINCIPAL",
+      "9-PRINCIPAL",
+      "10-PRINCIPAL",
+    ],
+    "CCM OFICINA": ["1-PRINCIPAL"],
+    "FÁBRICA DE AÇÚCAR": [
+      "1-TÉRREO",
+      "2-TÉRREO",
+      "3-TÉRREO",
+      "4-TÉRREO",
+      "5-TÉRREO",
+      "6-PISO 01",
+      "7-PISO 01",
+      "8-PISO 01",
+      "9-PISO 02",
+      "10-PISO 02",
+      "11-PISO 02",
+      "12-PISO 02",
+      "13-PISO 02",
+      "14-PISO 02",
+      "15-COBERTURA",
+      "16-COBERTURA",
+      "17-COBERTURA",
+      "18-COBERTURA",
+    ],
+    "CCM FÁBRICA DE AÇÚCAR": [
+      "1-PRINCIPAL",
+      "2-PRINCIPAL",
+      "3-PRINCIPAL",
+      "4-PRINCIPAL",
+      "5-PRINCIPAL",
+      "6-PISO 01",
+      "7-PISO 01",
+      "8-PISO 01",
+      "9-PISO 01",
+    ],
+    "EVAPORAÇÃO": [
+      "1-TÉRREO",
+      "2-TÉRREO",
+      "3-PISO 02",
+      "4-PISO 02",
+      "5-PISO 02",
+    ],
+    "CARREGAMENTO DE AÇÚCAR": [
+      "1-ESTEIRA",
+      "2-ESTEIRA",
+      "3-ESTEIRA",
+      "4-ESTEIRA",
+      "5-ESTEIRA",
+      "6-TORRE 01",
+      "7-TORRE 01 PISO 02",
+      "8-TORRE 01 PISO 03",
+      "9-PASSARELA",
+      "10-TORRE 02 PASSARELA",
+      "11-TORRE 02 PASSARELA",
+      "12-TORRE 02 PISO 02",
+      "13-TORRE 02 PISO 01",
+      "14-PORÃO",
+      "15-PORÃO",
+      "16-PORÃO",
+      "17-PORÃO",
+      "18-CARREGAMENTO",
+    ],
+    "CCM MOENDA": [
+      "1-MOENDA 1 E 2",
+      "2-MOENDA 1 E 2",
+      "3-MOENDA 1 E 2",
+      "4-MOENDA 1 E 2",
+      "5-MOENDA 1 E 2",
+      "6-MOENDA 1 E 2",
+      "7-MOENDA 1 E 2",
+    ],
+    "CALDEIRA CCM": ["1-PRINCIPAL", "2-PRINCIPAL", "3-PRINCIPAL"],
+    "CALDEIRA 01": ["1-PRINCIPAL", "2-PISO 01", "3-PISO 02", "4-PISO 02"],
+    "CALDEIRA 02": ["1-PISO 02", "2-PISO 03", "3-PISO 03"],
+    "CALDEIRA 03": [
+      "1-PRINCIPAL",
+      "2-PRINCIPAL",
+      "3-PRINCIPAL",
+      "4-PRINCIPAL",
+      "5-PISO 2",
+      "6-PISO 3",
+      "7-PISO 3",
+      "8-FULIGEM",
+    ],
+    "CARREGAMENTO DE FULIGEM": ["1-PRINCIPAL"],
+    "CASA DE FORÇA": [
+      "1-PRINCIPAL",
+      "2-PRINCIPAL",
+      "3-PRINCIPAL",
+      "4-PRINCIPAL",
+      "5-PRINCIPAL",
+      "6-PRINCIPAL",
+      "7-PRINCIPAL",
+      "8-PRINCIPAL",
+      "9-PISO 01",
+      "10-PISO 01",
+      "11-PISO 02",
+      "12-PISO 02",
+      "13-PISO 02",
+      "14-PISO 02",
+      "15-PISO 02",
+      "16-PISO 02",
+      "17-PISO 02",
+      "18-PORÃO CCM",
+      "19-PORÃO CCM",
+      "20-CCM INTERNO",
+      "21-CCM INTERNO",
+      "22-EXTERNO",
+      "23-EXTERNO",
+      "24-EXTERNO",
+      "25-EXTERNO",
+    ],
+    "TORRE 2": ["1-EXTERNO", "2-CCM", "3-CCM", "4-CCM EXTERNO"],
+    "ETA": [
+      "1-CCM EXTERNO",
+      "2-CCM INTERNO",
+      "3-PRINCIPAL",
+      "4-PRINCIPAL",
+      "5-PRINCIPAL",
+    ],
+    "DESTILARIA": [
+      "1-TÉRREO",
+      "2-TÉRREO",
+      "3-TÉRREO",
+      "4-TÉRREO EXTERNO",
+      "5-TÉRREO EXTERNO",
+      "6-PISO 01",
+      "7-PISO 01",
+      "8-PISO 02",
+      "9-02",
+      "10-02 TÉRREO",
+      "11-02 TÉRREO",
+      "12-02 PISO 01",
+      "13-02 PISO 01",
+      "14-EXTERNO",
+    ],
+    "CCM DESTILARIA": ["1-PRINCIPAL", "2-PRINCIPAL", "3-PRINCIPAL"],
+    "CARREGAMENTO DE ETANOL": ["1-PRINCIPAL", "2-PRINCIPAL", "3-PRINCIPAL"],
+    "TORRE DE FERMENTAÇÃO": [
+      "1-PRINCIPAL",
+      "2-PRINCIPAL",
+      "3-PRINCIPAL",
+      "4-PRINCIPAL",
+      "5-PRINCIPAL",
+    ],
+    "FERMENTAÇÃO": [
+      "1-TÉRREO",
+      "2-TÉRREO",
+      "3-TÉRREO",
+      "4-TÉRREO",
+      "5-TÉRREO",
+      "6-PISO 01",
+      "7-PISO 02",
+      "8-PISO 03",
+      "9-PISO 03",
+    ],
+    "CCM FERMENTAÇÃO": [
+      "1-PRINCIPAL",
+      "2-PRINCIPAL",
+      "3-PRINCIPAL",
+      "4-PRINCIPAL",
+    ],
+    "SISTEMA DE INCÊNDIO": [
+      "1-CCM",
+      "2-PRINCIPAL",
+      "3-PRINCIPAL",
+      "4-PRINCIPAL",
+    ],
+    "SALA DO COMPRESSOR": ["1-PRINCIPAL", "2-PRINCIPAL"],
+    "TRATAMENTO DE CALDO": [
+      "1-TÉRREO",
+      "2-TÉRREO",
+      "3-TÉRREO",
+      "4-TÉRREO",
+      "5-SALA COMPRESSOR",
+      "6-SALA COMPRESSOR",
+      "7-TÉRREO",
+      "8-TÉRREO",
+      "9-PISO 01",
+      "10-PISO 01",
+      "11-PISO 01",
+    ],
+    "CCM TRATAMENTO DE CALDO": ["1-PRINCIPAL", "2-PRINCIPAL"],
+    "FERTIRRIGAÇÃO": [
+      "1-CCM",
+      "2-CCM INTERNO",
+      "3-BEBEDOURO",
+      "4-CASA DE BOMBA",
+      "5-CCM",
+    ],
+    "OFICINA AGRÍCOLA": [
+      "1-PISO 01",
+      "2-PISO 01",
+      "3-ESCRITÓRIO",
+      "4-EXTERNO",
+      "5-EXTERNO",
+      "6-MANUTENÇÃO",
+      "7-MANUTENÇÃO",
+      "8-MANUTENÇÃO",
+      "9-MANUTENÇÃO",
+      "10-MANUTENÇÃO",
+      "11-MANUTENÇÃO",
+      "12-MANUTENÇÃO",
+      "13-MANUTENÇÃO",
+      "14-MANUTENÇÃO",
+      "15-MANUTENÇÃO",
+      "16-MANUTENÇÃO",
+      "17-MANUTENÇÃO CALDEIRARIA",
+      "18-MANUTENÇÃO",
+    ],
+    "BORRACHARIA / LUBRIFICAÇÃO": [
+      "1-OFICINA / LUBRIFICAÇÃO",
+      "2-OFICINA / LUBRIFICANTE",
+      "3-LAVA JATO",
+      "4-LUBRIFICAÇÃO",
+      "5-BORRACHARIA",
+    ],
+    "SALA DE TREINAMENTO": ["1-PRINCIPAL", "2-SANITÁRIOS"],
+    "ÁREA DE LIMPEZA SODEXO": ["1-ÁREA LIMPEZA", "2-ÁREA LIMPEZA"],
+    "COI": [
+      "1-EXTERNO",
+      "2-EXTERNO",
+      "3-EXTERNO",
+      "4-BANHEIRO",
+      "5-EXTERNO",
+      "6-INTERNO",
+      "7-SUPERVISOR",
+      "8-INTERNO",
+    ],
+    "MOENDA": [
+      "1-TÉRREO",
+      "2-TÉRREO",
+      "3-TÉRREO",
+      "4-TÉRREO",
+      "5-TÉRREO",
+      "6-PISO SUPERIOR",
+      "7-PISO SUPERIOR",
+      "8-PISO 2",
+      "9-TOMBADOR TÉRREO",
+      "10-TOMBADOR PISO SUPERIOR",
+      "11-MOINHO PISO 3",
+    ],
+    "MOENDA 2": [
+      "1-PRINCIPAL",
+      "2-PRINCIPAL",
+      "3-PRINCIPAL",
+      "4-PRINCIPAL",
+      "5-PRINCIPAL",
+      "6-PRINCIPAL",
+      "7-PRINCIPAL",
+      "8-PRINCIPAL",
+      "9-PRINCIPAL",
+      "10-PRINCIPAL",
+      "11-PISO 1",
+      "12-PISO 1",
+      "13-PISO 1",
+      "14-PISO 2",
+      "15-PISO 2",
+      "16-PISO 2",
+      "17-PISO 2",
+      "18-PISO 2",
+      "19-TOMBADOR",
+    ],
+    "SUBESTAÇÃO": [
+      "1-INTERNO",
+      "2-INTERNO",
+      "3-INTERNO",
+      "4-PRINCIPAL",
+      "5-PRINCIPAL",
+      "6-PRINCIPAL",
+    ],
+  },
+};
+
+const CATALOGO_FIXO_HIDRANTES: Record<string, string[]> = {
+  "BP - TROPICAL": [
+    "1-COA",
+    "2-COA",
+    "3-COI",
+    "4-COI",
+    "5-REFEITÓRIO",
+    "6-REFEITÓRIO",
+    "7-MECANICA",
+    "8-MECANICA",
+    "9-ALMOXARIFADO",
+    "10-ALMOXARIFADO",
+    "11-EVAPORAÇÃO",
+    "12-EVAPORAÇÃO",
+    "13-FABRICA DE AÇUCAR",
+    "14-FABRICA DE AÇUCAR",
+    "15-FABRICA DE AÇUCAR",
+    "16-FABRICA DE AÇUCAR",
+    "17-EVAPORAÇÃO",
+    "18-EVAPORAÇÃO",
+    "19-TRATAMENTO DE CALDO",
+    "20-TRATAMENTO DE CALDO",
+    "21-DIFUSOR 1",
+    "22-DIFUSOR 1",
+    "23-DIFUSOR 1",
+    "24-DIFUSOR 1",
+    "25-DIFUSOR 1",
+    "26-DIFUSOR 1",
+    "27-DIFUSOR 2",
+    "28-DIFUSOR 2",
+    "29-CALDEIRA",
+    "30-CALDEIRA",
+    "31-ETA",
+    "32-ETA",
+    "33-ETA FRENTE BAG",
+    "34-ETA FRENTE BAG",
+    "35-BOMBA BRIGADA",
+    "36-BOMBA BRIGADA",
+    "37-ETA",
+    "38-ETA",
+    "39-DESTILARIA",
+    "40-DESTILARIA",
+    "41-BAGAÇO INTERNO",
+    "42-BAGAÇO INTERNO",
+    "43-BAGAÇO",
+    "44-BAGAÇO",
+    "45-BAGAÇO",
+    "46-CAIERA",
+    "47-CAIERA",
+    "48-CAIERA",
+    "49-CAIERA",
+    "50-ETANOL",
+    "51-ETANOL",
+    "52-ETANOL",
+    "53-ETANOL",
+    "54-ETANOL",
+    "55-ETANOL",
+    "56-ETANOL",
+    "57-ETANOL",
+    "58-ETANOL",
+    "59-ETANOL",
+    "60-ETANOL",
+    "61-ETANOL",
+    "62-ETANOL",
+    "63-ETANOL",
+    "64-ETANOL",
+    "65-ETANOL",
+    "66-ETANOL",
+    "67-ETANOL",
+    "68-ETANOL",
+    "69-ETANOL",
+    "70-BARRACÃO",
+    "71-BARRACÃO",
+    "72-BARRACÃO",
+    "73-BARRACÃO",
+    "74-BARRACÃO",
+    "75-BARRACÃO",
+    "76-ADM",
+    "77-ADM",
+    "78-OFC AGRICOLA",
+    "79-OFC AGRICOLA",
+    "80-OFC AGRICOLA",
+    "81-OFC ALMOXARIFADO",
+    "82-OFC ESCRITÓRIO",
+    "83-OFICINA",
+    "84-OFICINA",
+    "85-CX RECAL BAGAÇO",
+    "86-CX RECAL FRENT CALDEIRA",
+    "87-CX RECAL FRENTE CCM"
+  ],
+  "BP - ITUMBIARA": [
+    "01-FERMENTAÇÃO",
+    "02-FERMENTAÇÃO",
+    "03-EVAPORAÇÃO",
+    "04-CALDEIRA",
+    "05-CALDEIRA",
+    "06-CCM CALDEIRA",
+    "07-DIFUSOR",
+    "08-FAB AÇUCAR",
+    "09-COI",
+    "10-OFC MANUTENÇÃO",
+    "11-DESTILARIA",
+    "12-DESTILARIA",
+    "13-DESTILARIA",
+    "14-TANQUE ETANOL",
+    "15-TANQUE ETANOL",
+    "16-TANQUE ETANOL",
+    "17-TANQUE ETANOL",
+    "18-TANQUE ETANOL",
+    "19-TANQUE ETANOL",
+    "20-TANQUE ETANOL",
+    "21-TANQUE ETANOL",
+    "22-TANQUE ETANOL",
+    "23-TANQUE ETANOL",
+    "24-PÁTIO DE BAGAÇO",
+    "25-PÁTIO DE BAGAÇO",
+    "26-PÁTIO DE BAGAÇO",
+    "27-PÁTIO DE BAGAÇO",
+    "28-PÁTIO DE BAGAÇO",
+    "29-PÁTIO DE BAGAÇO",
+    "30-DEF AGRICOLA",
+    "31-OFC AUTOMOTIVA",
+    "32-OFC AUTOMOTIVA",
+    "33-OFC AUTOMOTIVA",
+    "34-POSTO COMBUSTIVEL",
+    "35-ARMAZEM DE AÇUCAR",
+    "36-ARMAZEM DE AÇUCAR",
+    "37-TANQUE ETANOL",
+    "38-TANQUE ETANOL",
+    "39-TANQUE ETANOL"
+  ],
+  "BP - ITUIUTABA": [
+    "01-PATIO CHECK LIST",
+    "02-PATIO CHECK LIST",
+    "03-PATIO CHECK LIST",
+    "04-PATIO CHECK LIST",
+    "05-POSTO",
+    "06-POSTO",
+    "07-PATIO INTERNO",
+    "08-PATIO INTERNO",
+    "09-PATIO INTERNO",
+    "10-VLC",
+    "11-CALDEIRA",
+    "12-CALDEIRA",
+    "13-DIFUSOR",
+    "14-DIFUSOR",
+    "15-DIFUSOR",
+    "16-FAB DE AÇUCAR",
+    "17-FAB DE AÇUCAR",
+    "18-FAB DE AÇUCAR",
+    "19-FAB DE AÇUCAR PISO 1",
+    "20-FAB DE AÇUCAR PISO 2",
+    "21-ARMAZEM AÇUCAR",
+    "22-ARMAZEM DE AÇUCAR",
+    "23-TRATAMENTO TERREO",
+    "24-EVAPORAÇÃO PISO 01",
+    "25-EVAPORAÇÃO PISO 02",
+    "26-EVAPORAÇÃO PISO 02",
+    "27-EVAPORAÇÃO TERREO",
+    "28-TRATAMENTO PISO 01",
+    "29-FERMENTAÇÃO",
+    "30-FERMENTAÇÃO",
+    "31-FERMENTAÇÃO PISO 03",
+    "32-DESTILARIA",
+    "33-PRODUTOS QUIMICOS",
+    "34-TORRE RESFRIAMENTO",
+    "35-BAGAÇO",
+    "36-BAGAÇO",
+    "37-BAGAÇO",
+    "38-ETANOL",
+    "39-ETANOL",
+    "40-ETANOL",
+    "41-ETANOL",
+    "42-ETANOL",
+    "43-ETANOL",
+    "44-ETANOL",
+    "45-ETANOL",
+    "46-ETANOL",
+    "47-ETANOL",
+    "48-ETANOL",
+    "49-ETANOL",
+    "50-ETANOL",
+    "51-ETANOL",
+    "52-ETANOL",
+    "53-ETANOL",
+    "54-ETANOL",
+    "55-ETANOL",
+    "56-ETANOL",
+    "57-ETANOL",
+    "58-ETANOL",
+    "59-ETANOL",
+    "60-ETANOL",
+    "61-ETANOL",
+    "62-ETANOL",
+    "63-ETANOL",
+    "64-ETANOL",
+    "65-CALDEIRA",
+    "66-CALDEIRA PISO 04",
+    "67-BAGAÇO",
+    "68-BAGAÇO",
+    "69-BAGAÇO",
+    "70-BAGAÇO",
+    "71-BAGAÇO",
+    "72-AUTOMOTIVA",
+    "73-BORRACHARIA",
+    "74-OFC AUTOMOTIVA",
+    "75-PCM",
+    "76-AUTOMOTIVA",
+    "77-TENDA ARMAZEM",
+    "78-TENDA ARMAZEM"
+  ],
+  "BP - ITAPAGIPE": [
+    "01-AMBULATÓRIO",
+    "02-ETANOL",
+    "03-ETANOL",
+    "04-ETANOL",
+    "05-ETANOL",
+    "06-ETANOL",
+    "07-ETANOL",
+    "08-ETANOL",
+    "09-ETA",
+    "10-ETA",
+    "11-OFC AGRICOLA",
+    "12-OFC AGRICOLA",
+    "13-MOENDA",
+    "14-MOENDA",
+    "15-BAGAÇO",
+    "16-BAGAÇO",
+    "17-ARMAZEM DE AÇUCAR",
+    "18-TRATAMENTO DE CALDO",
+    "19-TRATAMENTO DE CALDO"
+  ],
+  "BP - FRUTAL": [
+    "01-OFICINA AGRICOLA",
+    "02-OFICINA AGRICOLA",
+    "03-ALMOXARIFADO",
+    "04-ETA",
+    "05-LADO CCM FÁBRICA",
+    "06-FERMENTAÇÃO",
+    "07-FERMENTAÇÃO/DESTILARIA",
+    "08-FÁBRICA AÇÚCAR",
+    "09-ATRÁS DA DESTILARIA",
+    "10-ETE / BAGAÇO",
+    "11-ATRÁS BAGAÇO",
+    "12-ATRÁS BAGAÇO",
+    "13-VLC",
+    "14-CALDEIRA",
+    "15-CALDEIRA",
+    "16-DIFUSOR",
+    "17-DIFUSOR",
+    "18-ETANOL",
+    "19-ETANOL",
+    "20-ETANOL",
+    "21-ETANOL",
+    "22-ETANOL",
+    "23-ETANOL",
+    "24-ETANOL",
+    "25-ETANOL",
+    "26-ETANOL",
+    "27-BORRACHARIA",
+    "28-ARMAZEM",
+    "29-ARMAZEM FRENT VLC",
+    "30-ARMAZEM",
+    "31-FABRICA AÇUCAR FRENT ARMZ",
+    "32-ETANOL FRENT ARMAZEM"
+  ],
+  "BP - SANTA JULIANA": [
+    "01-POSTO COMBUSTIVEL",
+    "02-POSTO COMBUSTIVEL",
+    "03-REFEITÓRIO EXT",
+    "04-PORTARIA",
+    "05-BORRACHARIA",
+    "06-OFC AGRICOLA",
+    "07-PCTS",
+    "08-CALDEIRA FRENTE SUBSTAÇÃO",
+    "09-CALDEIRA FRENTE SUBSTAÇÃO",
+    "10-BAGAÇO",
+    "11-CALDEIRA 1 TERREO",
+    "12-CALDEIRA 1 TERREO",
+    "13-CALDEIRA 2 TERREO",
+    "14-CALDEIRA 1 TERREO",
+    "15-CALDEIRA 1 TERREO",
+    "16-CARREGAMENTO FULIGEM",
+    "17-MOENDA 01",
+    "18-MOENDA 01",
+    "19-TORRE FABRICA",
+    "20-FUNDO DA TORRE",
+    "21-TORRE FABRICA",
+    "22-PATIO FERRO VELHO",
+    "23-FABRICA AÇUCAR TERREO",
+    "24-FABRICA AÇUCAR PISO 2",
+    "25-FABRICA AÇUCAR TETO",
+    "26-TRATAMENTO CALDO",
+    "27-TRATAMENTO COMPRESSOR",
+    "28-BARRACÃO AÇ ALMOXARIFADO",
+    "29-BARRACÃO AÇ ALMOXARIFADO",
+    "30-BARRACÃO AÇ ALMOXARIFADO",
+    "31-TORRE DA FERMENTAÇÃO",
+    "32-CARREGAMENTO ETANOL",
+    "33-CARREGAMENTO ETANOL",
+    "34-CARREGAMENTO ETANOL",
+    "35-ETA",
+    "36-FERMENTAÇÃO FRENTE ETA",
+    "37-DESTILARIA EXTERNO",
+    "38-TRATAMENTO CALDO FRNT BARR",
+    "39-FRENTE LINHA DE TREM",
+    "40-FRENTE CARREGAMENTO",
+    "41-FUNDO ALMOXARIFADO",
+    "42-ALMOXARIFADO INTERNO PISO 1",
+    "43-MANUTENÇÃO PISO 1",
+    "44-ETANOL",
+    "45-ETANOL",
+    "46-ETANOL",
+    "47-ETANOL",
+    "48-ETANOL",
+    "49-ETANOL",
+    "50-ETANOL",
+    "51-ETANOL",
+    "52-OFC AGR PISO 1"
+  ]
+};
+
+const CATALOGO_FIXO_LAVA_OLHOS: Record<string, string[]> = {
+  "BP - TROPICAL": [],
+  "BP - ITUMBIARA": [],
+  "BP - ITUIUTABA": [
+    "01-POSTO COMBUSTÍVEL",
+    "02-MANUTENÇÃO",
+    "03-ALMOXARIFADO",
+    "04-COI LABORATÓRIO",
+    "05-CALDEIRA TERREO",
+    "06-CALDA PRONTA",
+    "07-OFC AGRICOLA",
+    "08-FERMENTAÇÃO TERREO",
+    "09-FERMENTAÇÃO PISO 2",
+    "10-DESTILARIA FUNDO",
+    "11-DESTILARIA FUNDO",
+    "12-ETA CCM"
+  ],
+  "BP - ITAPAGIPE": [
+    "01-ALMOXARIFADO",
+    "02-LAB COI",
+    "03-CALDEIRA",
+    "04-FERMENTAÇÃO",
+    "05-LAB PCTS",
+    "06-TRATAMENTO DE CALDO",
+    "07-ETA"
+  ],
+  "BP - FRUTAL": [
+    "01-FERMENTAÇÃO",
+    "02-FERMENTAÇÃO PISO 2",
+    "03-OFIC MEC AGRICOLA",
+    "04-LAB PCTS",
+    "05-POSTO DE COMBUSTIVEL",
+    "06-CALDEIRA",
+    "07-TRATAMENTO DE CALDO",
+    "08-DESTILARIA",
+    "09-ETE",
+    "10-LAB INDUSTRIAL"
+  ],
+  "BP - SANTA JULIANA": [
+    "01-BORRACHARIA",
+    "02-PCTS LABORATÓRIO",
+    "03-OFC MANU INDUSTRIA",
+    "04-CALDA PRONTA PISO 1",
+    "05-CALDA PRONTA TERREO",
+    "06-EVAPORAÇÃO TERREO",
+    "07-DESTILARIA 1 INTERNO",
+    "08-FERMENTAÇÃO TERREO",
+    "09-ETA",
+    "10-ALMOXARIFADO PÁTIO",
+    "11-DEPÓSITO DE ÓLEO",
+    "12-POSTO",
+    "13-CASA DE BOMBA",
+    "14-CASA DE FORÇA EXTERNO",
+    "15-MOENDA 1"
+  ]
+};
+
+function gerarMangueirasLegado(total: number) {
+  return Array.from({ length: total }, (_item, index) =>
+    `Mangueira ${String(index + 1).padStart(3, "0")}`
+  );
+}
+
+const CATALOGO_FIXO_TESTE_HIDROSTATICO: Record<string, string[]> = {
+  "BP - TROPICAL": gerarMangueirasLegado(407),
+  "BP - ITUMBIARA": gerarMangueirasLegado(180),
+  "BP - ITUIUTABA": gerarMangueirasLegado(308),
+  "BP - ITAPAGIPE": gerarMangueirasLegado(88),
+  "BP - FRUTAL": gerarMangueirasLegado(90),
+  "BP - SANTA JULIANA": gerarMangueirasLegado(221),
+};
+
+
+// Inventário real de EXTINTORES extraído do main.dart do app Flutter.
+// Esse mapa é usado no PDF para calcular o percentual real da área.
+// Exemplo: BP - ITAPAGIPE / ÁREA DE VIVÊNCIA = 5, então 1 vistoriado = 20%, não 100%.
+const TOTAL_EXTINTORES_MAIN_DART: Record<string, number> = {
+  "BPFRUTAL|ADM": 9,
+  "BPFRUTAL|ALMOXARIFADO": 11,
+  "BPFRUTAL|AREAAGRICOLA": 20,
+  "BPFRUTAL|BALANCA": 1,
+  "BPFRUTAL|BARRACAODEACUCAR": 15,
+  "BPFRUTAL|CALDEIRA": 11,
+  "BPFRUTAL|CARREGAMENTODEETANOL": 5,
+  "BPFRUTAL|CASADEBOMBAS": 14,
+  "BPFRUTAL|CASADEFORCA": 7,
+  "BPFRUTAL|CENTRALDERESIDUOS": 3,
+  "BPFRUTAL|CONTROLE": 1,
+  "BPFRUTAL|DESTILARIA": 9,
+  "BPFRUTAL|DIFUSOR": 14,
+  "BPFRUTAL|ESCRITORIOINDUSTRIAL": 2,
+  "BPFRUTAL|ETA": 4,
+  "BPFRUTAL|FABRICADEACUCAR": 9,
+  "BPFRUTAL|FERMENTACAO": 12,
+  "BPFRUTAL|GERADORDIESEL": 6,
+  "BPFRUTAL|INSTRUMENTACAOMECANICA": 4,
+  "BPFRUTAL|INSUMOSAGRICOLAS": 4,
+  "BPFRUTAL|LABORATORIOPCTS": 2,
+  "BPFRUTAL|LGE": 6,
+  "BPFRUTAL|PORTARIA": 1,
+  "BPFRUTAL|POSTO": 5,
+  "BPFRUTAL|REFEITORIO": 7,
+  "BPFRUTAL|TRATAMENTODECALDO": 8,
+  "BPFRUTAL|VIVENCIA": 2,
+  "BPFRUTAL|VIVENCIAMOTORISTA": 1,
+  "BPFRUTAL|VLC": 2,
+  "BPITAPAGIPE|ADM": 3,
+  "BPITAPAGIPE|ALMOXARIFADO": 11,
+  "BPITAPAGIPE|AMBULATORIO": 2,
+  "BPITAPAGIPE|AREADEVIVENCIA": 5,
+  "BPITAPAGIPE|ARMAZEMDEACUCAR": 7,
+  "BPITAPAGIPE|BALANCA": 1,
+  "BPITAPAGIPE|CALDEIRA": 4,
+  "BPITAPAGIPE|CARREGAMENTODEETANOL": 2,
+  "BPITAPAGIPE|CASADEFORCA": 6,
+  "BPITAPAGIPE|CCMDACALDEIRA": 1,
+  "BPITAPAGIPE|CCMDADESTILARIA": 1,
+  "BPITAPAGIPE|CCMETA": 3,
+  "BPITAPAGIPE|CCMFABRICADEACUCAR": 3,
+  "BPITAPAGIPE|CCMPREPARODECALDO": 2,
+  "BPITAPAGIPE|CCMVINHACA": 1,
+  "BPITAPAGIPE|CENTRALDERESIDUOS": 9,
+  "BPITAPAGIPE|COI": 2,
+  "BPITAPAGIPE|DESTILARIA": 2,
+  "BPITAPAGIPE|ETA": 1,
+  "BPITAPAGIPE|FABRICADEACUCAR": 10,
+  "BPITAPAGIPE|FERMENTACAO": 4,
+  "BPITAPAGIPE|LABORATORIOPCTS": 2,
+  "BPITAPAGIPE|MOENDA": 4,
+  "BPITAPAGIPE|OFICINAAGRICOLA": 18,
+  "BPITAPAGIPE|OFICINAINDUSTRIA": 9,
+  "BPITAPAGIPE|PORTARIA": 1,
+  "BPITAPAGIPE|POSTO": 5,
+  "BPITAPAGIPE|REFEITORIO": 6,
+  "BPITAPAGIPE|SALADETREINAMENTO": 1,
+  "BPITAPAGIPE|TRATAMENTODECALDO": 7,
+  "BPITAPAGIPE|VINHACA": 4,
+  "BPITAPAGIPE|VIVENCIAMOTORISTA": 1,
+  "BPITAPAGIPE|VLC": 5,
+  "BPITUIUTABA|ADM": 11,
+  "BPITUIUTABA|ALMOXARIFADO": 5,
+  "BPITUIUTABA|ANTENA": 2,
+  "BPITUIUTABA|AREADEVIVENCIA": 1,
+  "BPITUIUTABA|BALANCA": 1,
+  "BPITUIUTABA|BARRACAODEACUCAR": 17,
+  "BPITUIUTABA|CAIEIRA": 2,
+  "BPITUIUTABA|CALDEIRA": 12,
+  "BPITUIUTABA|CARREGAMENTODEETANOL": 4,
+  "BPITUIUTABA|CASADEFORCA": 19,
+  "BPITUIUTABA|CENTRALDERESIDUOS": 2,
+  "BPITUIUTABA|COI": 5,
+  "BPITUIUTABA|CONTAINER": 1,
+  "BPITUIUTABA|DEPOSITODEINSUMOS": 5,
+  "BPITUIUTABA|DESTILARIA": 6,
+  "BPITUIUTABA|DIFUSOR": 10,
+  "BPITUIUTABA|ETA": 5,
+  "BPITUIUTABA|ETE": 3,
+  "BPITUIUTABA|EVAPORACAO": 17,
+  "BPITUIUTABA|EXPEDICAO": 4,
+  "BPITUIUTABA|FABRICADEACUCAR": 18,
+  "BPITUIUTABA|FERMENTACAO": 12,
+  "BPITUIUTABA|INSTRUMENTACAO": 2,
+  "BPITUIUTABA|MANUTENCAO": 4,
+  "BPITUIUTABA|OFICINA": 22,
+  "BPITUIUTABA|PCTS": 1,
+  "BPITUIUTABA|POSTO": 8,
+  "BPITUIUTABA|REFEITORIO": 7,
+  "BPITUIUTABA|SUBESTACAO": 7,
+  "BPITUIUTABA|TENDAPRODUTOSQUIMICOS": 2,
+  "BPITUIUTABA|TORREDERESFRIAMENTO": 2,
+  "BPITUIUTABA|TRATAMENTODECALDO": 10,
+  "BPITUIUTABA|VIVEIRO": 2,
+  "BPITUIUTABA|VLC": 4,
+  "BPITUMBIARA|ADM02": 12,
+  "BPITUMBIARA|ADMAGRICOLA": 8,
+  "BPITUMBIARA|ALMOXARIFADO": 8,
+  "BPITUMBIARA|AREADEVIVENCIA": 3,
+  "BPITUMBIARA|ARMAZEM": 9,
+  "BPITUMBIARA|BALANCA": 2,
+  "BPITUMBIARA|CALDEIRA": 21,
+  "BPITUMBIARA|CARREGAMENTODEALCOOL": 2,
+  "BPITUMBIARA|CASADEFORCA": 23,
+  "BPITUMBIARA|CCMDACALDEIRA": 4,
+  "BPITUMBIARA|CENTRALDERESIDUOS": 5,
+  "BPITUMBIARA|COI": 6,
+  "BPITUMBIARA|DEFENSIVOSAGRICOLAS": 13,
+  "BPITUMBIARA|DESTILARIA": 8,
+  "BPITUMBIARA|DIFUSOR": 20,
+  "BPITUMBIARA|ETA": 10,
+  "BPITUMBIARA|EVAPORACAO": 21,
+  "BPITUMBIARA|EXPEDICAO": 7,
+  "BPITUMBIARA|FABRICADEACUCAR": 16,
+  "BPITUMBIARA|FERMENTACAO": 20,
+  "BPITUMBIARA|MANUTENCAO": 6,
+  "BPITUMBIARA|OFICINA": 34,
+  "BPITUMBIARA|PCTS": 3,
+  "BPITUMBIARA|POSTO": 15,
+  "BPITUMBIARA|REFEITORIO": 13,
+  "BPITUMBIARA|TANQUEDEALCOOL": 7,
+  "BPITUMBIARA|TORREDERESFRIAMENTO": 8,
+  "BPITUMBIARA|TRATAMENTODECALDO": 8,
+  "BPITUMBIARA|VLC": 7,
+  "BPSANTAJULIANA|ALMOXARIFADO": 13,
+  "BPSANTAJULIANA|AREADELIMPEZASODEXO": 2,
+  "BPSANTAJULIANA|BALANCA": 2,
+  "BPSANTAJULIANA|BORRACHARIALUBRIFICACAO": 5,
+  "BPSANTAJULIANA|CALDAPRONTA": 6,
+  "BPSANTAJULIANA|CALDEIRA01": 4,
+  "BPSANTAJULIANA|CALDEIRA02": 3,
+  "BPSANTAJULIANA|CALDEIRA03": 8,
+  "BPSANTAJULIANA|CALDEIRACCM": 3,
+  "BPSANTAJULIANA|CARREGAMENTODEACUCAR": 18,
+  "BPSANTAJULIANA|CARREGAMENTODEETANOL": 3,
+  "BPSANTAJULIANA|CARREGAMENTODEFULIGEM": 1,
+  "BPSANTAJULIANA|CASADEFORCA": 25,
+  "BPSANTAJULIANA|CCMDESTILARIA": 3,
+  "BPSANTAJULIANA|CCMFABRICADEACUCAR": 9,
+  "BPSANTAJULIANA|CCMFERMENTACAO": 4,
+  "BPSANTAJULIANA|CCMMOENDA": 7,
+  "BPSANTAJULIANA|CCMOFICINA": 1,
+  "BPSANTAJULIANA|CCMTRATAMENTODECALDO": 2,
+  "BPSANTAJULIANA|COI": 8,
+  "BPSANTAJULIANA|DEPOSITODEGAS": 3,
+  "BPSANTAJULIANA|DEPOSITODELIXO": 2,
+  "BPSANTAJULIANA|DESTILARIA": 14,
+  "BPSANTAJULIANA|DOJO": 4,
+  "BPSANTAJULIANA|ETA": 5,
+  "BPSANTAJULIANA|EVAPORACAO": 5,
+  "BPSANTAJULIANA|FABRICADEACUCAR": 18,
+  "BPSANTAJULIANA|FERMENTACAO": 9,
+  "BPSANTAJULIANA|FERTIRRIGACAO": 5,
+  "BPSANTAJULIANA|LABORATORIOPCTS": 8,
+  "BPSANTAJULIANA|MOENDA": 11,
+  "BPSANTAJULIANA|MOENDA2": 19,
+  "BPSANTAJULIANA|OFICINAAGRICOLA": 18,
+  "BPSANTAJULIANA|OFICINAMANUTENCAO": 7,
+  "BPSANTAJULIANA|PORTARIA": 1,
+  "BPSANTAJULIANA|POSTO": 12,
+  "BPSANTAJULIANA|REFEITORIO": 8,
+  "BPSANTAJULIANA|RH": 6,
+  "BPSANTAJULIANA|SALADETREINAMENTO": 2,
+  "BPSANTAJULIANA|SALADOCOMPRESSOR": 2,
+  "BPSANTAJULIANA|SEGURANCADOTRABALHO": 3,
+  "BPSANTAJULIANA|SISTEMADEINCENDIO": 4,
+  "BPSANTAJULIANA|SUBESTACAO": 6,
+  "BPSANTAJULIANA|TORRE2": 4,
+  "BPSANTAJULIANA|TORREDAFABRICA": 10,
+  "BPSANTAJULIANA|TORREDEFERMENTACAO": 5,
+  "BPSANTAJULIANA|TRATAMENTODECALDO": 11,
+  "BPSANTAJULIANA|VESTIARIOPORTARIA": 5,
+  "BPSANTAJULIANA|VIVENCIA": 1,
+  "BPTROPICAL|ADMINISTRATIVORECEPCAO": 3,
+  "BPTROPICAL|ALMOXARIFADO": 7,
+  "BPTROPICAL|AREADEVIVENCIA": 3,
+  "BPTROPICAL|BALANCA": 2,
+  "BPTROPICAL|BARRACAODEACUCAR": 3,
+  "BPTROPICAL|BATEEVOLTAMOTORISTA": 1,
+  "BPTROPICAL|BOMBADEINCENDIO": 3,
+  "BPTROPICAL|CAIEIRA": 3,
+  "BPTROPICAL|CALDEIRA01": 10,
+  "BPTROPICAL|CALDEIRA02": 18,
+  "BPTROPICAL|CALDEIRA02CCMTERREO": 11,
+  "BPTROPICAL|CARREGAMENTOETANOL": 4,
+  "BPTROPICAL|CASADEFORCA": 38,
+  "BPTROPICAL|CENTRALDERESIDUOS": 2,
+  "BPTROPICAL|COI": 9,
+  "BPTROPICAL|DEPOSITODEOXIGENIO": 2,
+  "BPTROPICAL|DEPOSITOINSUMOS": 12,
+  "BPTROPICAL|DESTILARIA01": 13,
+  "BPTROPICAL|DESTILARIA01CCM": 4,
+  "BPTROPICAL|DESTILARIA02": 8,
+  "BPTROPICAL|DIFUSOR01CCM": 3,
+  "BPTROPICAL|DIFUSOR01TERREO": 15,
+  "BPTROPICAL|DIFUSOR02TERREOMOTORES": 18,
+  "BPTROPICAL|DIFUSORCCM02": 12,
+  "BPTROPICAL|ETA": 12,
+  "BPTROPICAL|ETACCM": 3,
+  "BPTROPICAL|EVAPORACAO": 10,
+  "BPTROPICAL|EVAPORACAOCCM": 3,
+  "BPTROPICAL|EXPEDICAO": 4,
+  "BPTROPICAL|FABRICADEACUCAR": 10,
+  "BPTROPICAL|FERMENTACAO": 9,
+  "BPTROPICAL|MANUTENCAO": 3,
+  "BPTROPICAL|OFICIMPLEMENTOSALAMONTAGEM": 3,
+  "BPTROPICAL|OFICINAAUTOMOTIVA": 10,
+  "BPTROPICAL|OFICINABORRACHARIALAVADOR": 6,
+  "BPTROPICAL|PCTS": 5,
+  "BPTROPICAL|PORTARIA": 4,
+  "BPTROPICAL|PORTARIAINDUSTRIARH": 2,
+  "BPTROPICAL|POSTO": 15,
+  "BPTROPICAL|R6": 3,
+  "BPTROPICAL|R6CCM": 2,
+  "BPTROPICAL|R7": 4,
+  "BPTROPICAL|R7CCM": 2,
+  "BPTROPICAL|REFEITORIO": 10,
+  "BPTROPICAL|SALAANGELIN": 2,
+  "BPTROPICAL|SALACAJA": 2,
+  "BPTROPICAL|SALACEDRO": 2,
+  "BPTROPICAL|SALADOJOAGRICOLA": 2,
+  "BPTROPICAL|SALADOJOINDUSTRIA": 2,
+  "BPTROPICAL|SALAJEQUITIBA": 2,
+  "BPTROPICAL|SALAJERIVA": 2,
+  "BPTROPICAL|SEGURANCADOTRABALHO": 3,
+  "BPTROPICAL|SUBESTACAO": 11,
+  "BPTROPICAL|TORREDERESFRIAMENTOCCM": 14,
+  "BPTROPICAL|TORREDERESFRIAMENTOMOTORES": 4,
+  "BPTROPICAL|TRATAMENTOCALDOCCM": 3,
+  "BPTROPICAL|TRATAMENTODECALDO": 6,
+  "BPTROPICAL|TRATAMENTOESGOTO": 1,
+  "BPTROPICAL|VISTCAMINHAOFATURAMENTO": 3,
+  "BPTROPICAL|VLC": 2
+};
+
 function normalizarTexto(valor: unknown) {
   return String(valor ?? "")
     .trim()
     .toUpperCase()
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "");
+}
+
+function normalizarChaveInventario(valor: unknown) {
+  return normalizarTexto(valor).replace(/[^A-Z0-9]/g, "");
 }
 
 function pegarCampo(linha: LinhaBanco, campos: string[]) {
@@ -2404,6 +4832,440 @@ export default function Home() {
     });
   }
 
+
+  function normalizarTipoParaComparacao(valor: unknown) {
+    const tipo = normalizarTexto(valor);
+
+    if (tipo.includes("EXTINTOR")) return "EXTINTORES";
+    if (tipo.includes("HIDRANTE")) return "HIDRANTES";
+    if (tipo.includes("LAVA")) return "LAVA_OLHOS";
+    if (tipo.includes("TESTE") || tipo.includes("HIDROSTATICO")) return "TESTE_HIDROSTATICO";
+
+    return tipo;
+  }
+
+  function chaveGrupoAreaRelatorio(vistoria: LinhaBanco) {
+    return [
+      normalizarTexto(obterEmpresaRelatorio(vistoria)),
+      normalizarTexto(obterAreaRelatorio(vistoria)),
+      normalizarTipoParaComparacao(obterTipo(vistoria)),
+    ].join("|");
+  }
+
+  function agruparVistoriasPorAreaRelatorio(lista: LinhaBanco[]) {
+    const grupos = new Map<
+      string,
+      {
+        empresa: string;
+        area: string;
+        tipo: string;
+        itens: LinhaBanco[];
+      }
+    >();
+
+    for (const vistoria of lista) {
+      const chave = chaveGrupoAreaRelatorio(vistoria);
+      const empresa = obterEmpresaRelatorio(vistoria);
+      const area = obterAreaRelatorio(vistoria);
+      const tipo = obterTipo(vistoria);
+
+      if (!grupos.has(chave)) {
+        grupos.set(chave, {
+          empresa,
+          area,
+          tipo,
+          itens: [],
+        });
+      }
+
+      grupos.get(chave)?.itens.push(vistoria);
+    }
+
+    return Array.from(grupos.values()).sort((a, b) => {
+      const empresaA = a.empresa.localeCompare(b.empresa);
+      if (empresaA !== 0) return empresaA;
+
+      const areaA = a.area.localeCompare(b.area);
+      if (areaA !== 0) return areaA;
+
+      return a.tipo.localeCompare(b.tipo);
+    });
+  }
+
+  function obterEquipamentosCadastradosDaArea({
+    empresa,
+    area,
+    tipo,
+  }: {
+    empresa: string;
+    area: string;
+    tipo: string;
+  }) {
+    const empresaNormalizada = normalizarChaveInventario(empresa);
+    const areaNormalizada = normalizarChaveInventario(area);
+    const tipoNormalizado = normalizarTipoParaComparacao(tipo);
+    const equipamentos = new Set<string>();
+
+    for (const item of catalogo) {
+      if (statusCatalogo(item.status) !== "ATIVO") continue;
+
+      if (normalizarChaveInventario(item.empresa_nome) !== empresaNormalizada) continue;
+      if (normalizarChaveInventario(item.area_nome) !== areaNormalizada) continue;
+      if (normalizarTipoParaComparacao(item.tipo) !== tipoNormalizado) continue;
+
+      const equipamento = normalizarTexto(item.equipamento_nome);
+      if (equipamento) equipamentos.add(equipamento);
+    }
+
+    return equipamentos;
+  }
+
+  function obterEquipamentosCatalogoFixoDaArea({
+    empresa,
+    area,
+    tipo,
+  }: {
+    empresa: string;
+    area: string;
+    tipo: string;
+  }) {
+    const empresaNormalizada = normalizarChaveInventario(empresa);
+    const areaNormalizada = normalizarChaveInventario(area);
+    const tipoNormalizado = normalizarTipoParaComparacao(tipo);
+    const equipamentos = new Set<string>();
+
+    function encontrarEmpresa<T>(mapa: Record<string, T>) {
+      return Object.entries(mapa).find(
+        ([nomeEmpresa]) => normalizarChaveInventario(nomeEmpresa) === empresaNormalizada
+      )?.[1];
+    }
+
+    if (tipoNormalizado === "EXTINTORES") {
+      const areasDaEmpresa = encontrarEmpresa(CATALOGO_FIXO_EXTINTORES);
+
+      if (areasDaEmpresa) {
+        const equipamentosDaArea = Object.entries(areasDaEmpresa).find(
+          ([nomeArea]) => normalizarChaveInventario(nomeArea) === areaNormalizada
+        )?.[1];
+
+        for (const equipamento of equipamentosDaArea ?? []) {
+          const normalizado = normalizarTexto(equipamento);
+          if (normalizado) equipamentos.add(normalizado);
+        }
+      }
+    }
+
+    if (tipoNormalizado === "HIDRANTES") {
+      const equipamentosDaEmpresa = encontrarEmpresa(CATALOGO_FIXO_HIDRANTES) ?? [];
+
+      for (const equipamento of equipamentosDaEmpresa) {
+        const normalizado = normalizarTexto(equipamento);
+        if (normalizado) equipamentos.add(normalizado);
+      }
+    }
+
+    if (tipoNormalizado === "LAVA_OLHOS") {
+      const equipamentosDaEmpresa = encontrarEmpresa(CATALOGO_FIXO_LAVA_OLHOS) ?? [];
+
+      for (const equipamento of equipamentosDaEmpresa) {
+        const normalizado = normalizarTexto(equipamento);
+        if (normalizado) equipamentos.add(normalizado);
+      }
+    }
+
+    if (tipoNormalizado === "TESTE_HIDROSTATICO") {
+      const equipamentosDaEmpresa = encontrarEmpresa(CATALOGO_FIXO_TESTE_HIDROSTATICO) ?? [];
+
+      for (const equipamento of equipamentosDaEmpresa) {
+        const normalizado = normalizarTexto(equipamento);
+        if (normalizado) equipamentos.add(normalizado);
+      }
+    }
+
+    return equipamentos;
+  }
+
+  function obterEquipamentosConhecidosNoHistoricoDaArea({
+    empresa,
+    area,
+    tipo,
+  }: {
+    empresa: string;
+    area: string;
+    tipo: string;
+  }) {
+    const empresaNormalizada = normalizarChaveInventario(empresa);
+    const areaNormalizada = normalizarChaveInventario(area);
+    const tipoNormalizado = normalizarTipoParaComparacao(tipo);
+    const equipamentos = new Set<string>();
+
+    // Importante: usa TODAS as vistorias carregadas do Supabase, não apenas o período filtrado.
+    // Assim o dashboard não calcula 100% quando o filtro do relatório trouxe apenas 1 vistoria do dia.
+    for (const vistoria of vistorias) {
+      if (normalizarChaveInventario(obterEmpresaRelatorio(vistoria)) !== empresaNormalizada) continue;
+      if (normalizarChaveInventario(obterAreaRelatorio(vistoria)) !== areaNormalizada) continue;
+      if (normalizarTipoParaComparacao(obterTipo(vistoria)) !== tipoNormalizado) continue;
+
+      const equipamento = normalizarTexto(obterEquipamento(vistoria));
+      if (equipamento) equipamentos.add(equipamento);
+    }
+
+    return equipamentos;
+  }
+
+  function calcularResumoAreaRelatorio(grupo: {
+    empresa: string;
+    area: string;
+    tipo: string;
+    itens: LinhaBanco[];
+  }) {
+    const vistoriadosUnicos = new Set(
+      grupo.itens.map((vistoria) => normalizarTexto(obterEquipamento(vistoria))).filter(Boolean)
+    );
+
+    const equipamentosCatalogo = obterEquipamentosCadastradosDaArea({
+      empresa: grupo.empresa,
+      area: grupo.area,
+      tipo: grupo.tipo,
+    });
+
+    const equipamentosHistoricoGeral = obterEquipamentosConhecidosNoHistoricoDaArea({
+      empresa: grupo.empresa,
+      area: grupo.area,
+      tipo: grupo.tipo,
+    });
+
+    const equipamentosCatalogoFixo = obterEquipamentosCatalogoFixoDaArea({
+      empresa: grupo.empresa,
+      area: grupo.area,
+      tipo: grupo.tipo,
+    });
+
+    // Inventário conhecido = catálogo fixo original do app + equipamentos ativos cadastrados no painel.
+    // Isso evita o erro de calcular 1 de 1 = 100% quando a área tem vários extintores no inventário original.
+    const equipamentosInventarioConhecido = new Set([
+      ...Array.from(equipamentosCatalogoFixo),
+      ...Array.from(equipamentosCatalogo),
+    ]);
+
+    const totalCatalogo = equipamentosCatalogo.size;
+    const totalCatalogoFixo = equipamentosCatalogoFixo.size;
+    const chaveTotalMain = `${normalizarChaveInventario(grupo.empresa)}|${normalizarChaveInventario(grupo.area)}`;
+    const totalMainDart = normalizarTipoParaComparacao(grupo.tipo) === "EXTINTORES"
+      ? (TOTAL_EXTINTORES_MAIN_DART[chaveTotalMain] ?? 0)
+      : 0;
+    const totalInventarioConhecido = Math.max(
+      totalMainDart,
+      equipamentosInventarioConhecido.size
+    );
+    const totalHistoricoGeral = equipamentosHistoricoGeral.size;
+    const vistoriados = vistoriadosUnicos.size;
+
+    // Ordem de confiança para o total da área:
+    // 1) Total real do main.dart do app Flutter, por empresa + área.
+    // 2) Inventário conhecido do app/painel: catálogo fixo original + catálogo ativo do painel.
+    // 3) Histórico geral do Supabase para a mesma empresa/área/tipo, fora do filtro de data.
+    // 4) Quantidade vistoriada no relatório, apenas como último fallback.
+    const totalBase = totalMainDart > 0
+      ? totalMainDart
+      : totalInventarioConhecido > 0
+        ? totalInventarioConhecido
+        : totalHistoricoGeral > 0
+          ? totalHistoricoGeral
+          : vistoriados;
+
+    const total = Math.max(totalBase, vistoriados);
+    const naoVistoriados = Math.max(total - vistoriados, 0);
+    const percentual = total === 0 ? 0 : Math.round((vistoriados / total) * 100);
+
+    let origemTotal = "Histórico filtrado";
+
+    if (totalMainDart > 0) {
+      origemTotal = "INVENTÁRIO REAL DO MAIN.DART";
+    } else if (totalInventarioConhecido > 0) {
+      origemTotal = "Estrutura fixa do main.dart + Catálogo do painel";
+    } else if (totalHistoricoGeral > 0) {
+      origemTotal = "Histórico geral da área";
+    }
+
+    return {
+      empresa: grupo.empresa,
+      area: grupo.area,
+      tipo: grupo.tipo,
+      total,
+      totalCatalogo,
+      totalCatalogoFixo,
+      totalMainDart,
+      totalInventarioConhecido,
+      totalHistoricoGeral,
+      vistoriados,
+      naoVistoriados,
+      percentual,
+      origemTotal,
+    };
+  }
+
+  function gerarGraficoPizzaAreaDataUrl({
+    percentual,
+    vistoriados,
+    total,
+  }: {
+    percentual: number;
+    vistoriados: number;
+    total: number;
+  }) {
+    const tamanho = 520;
+    const canvas = document.createElement("canvas");
+    canvas.width = tamanho;
+    canvas.height = tamanho;
+
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return "";
+
+    const centro = tamanho / 2;
+    const raio = 205;
+    const inicio = -Math.PI / 2;
+    const fimVistoriado = inicio + (Math.PI * 2 * Math.max(0, Math.min(100, percentual))) / 100;
+
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, tamanho, tamanho);
+
+    ctx.beginPath();
+    ctx.moveTo(centro, centro);
+    ctx.arc(centro, centro, raio, 0, Math.PI * 2);
+    ctx.closePath();
+    ctx.fillStyle = "#dc2626";
+    ctx.fill();
+
+    if (percentual > 0) {
+      ctx.beginPath();
+      ctx.moveTo(centro, centro);
+      ctx.arc(centro, centro, raio, inicio, fimVistoriado);
+      ctx.closePath();
+      ctx.fillStyle = "#16a34a";
+      ctx.fill();
+    }
+
+    ctx.beginPath();
+    ctx.arc(centro, centro, 116, 0, Math.PI * 2);
+    ctx.fillStyle = "#ffffff";
+    ctx.fill();
+
+    ctx.strokeStyle = "#e5e7eb";
+    ctx.lineWidth = 8;
+    ctx.stroke();
+
+    ctx.fillStyle = "#7f1d1d";
+    ctx.font = "bold 62px Arial";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(`${percentual}%`, centro, centro - 10);
+
+    ctx.fillStyle = "#52525b";
+    ctx.font = "bold 28px Arial";
+    ctx.fillText(`${vistoriados}/${total}`, centro, centro + 52);
+
+    return canvas.toDataURL("image/png");
+  }
+
+  function escreverDashboardAreaPdf(
+    doc: any,
+    resumo: ReturnType<typeof calcularResumoAreaRelatorio>,
+    posicaoY: number
+  ) {
+    const margemX = 40;
+    const larguraTotal = 515;
+    const alturaBloco = 214;
+
+    posicaoY = garantirEspacoNoPdf(doc, posicaoY, alturaBloco + 18);
+
+    const graficoDataUrl = gerarGraficoPizzaAreaDataUrl({
+      percentual: resumo.percentual,
+      vistoriados: resumo.vistoriados,
+      total: resumo.total,
+    });
+
+    doc.setFillColor(255, 255, 255);
+    doc.setDrawColor(196, 201, 209);
+    doc.roundedRect(margemX, posicaoY - 10, larguraTotal, alturaBloco, 12, 12, "FD");
+
+    doc.setFillColor(254, 242, 242);
+    doc.roundedRect(margemX + 10, posicaoY, larguraTotal - 20, 32, 9, 9, "F");
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(12);
+    doc.setTextColor(127, 29, 29);
+    doc.text("DASHBOARD DA ÁREA", margemX + 20, posicaoY + 21);
+
+    if (graficoDataUrl) {
+      doc.addImage(graficoDataUrl, "PNG", margemX + 22, posicaoY + 48, 138, 138);
+    }
+
+    const infoX = margemX + 184;
+    let y = posicaoY + 58;
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(15);
+    doc.setTextColor(39, 39, 42);
+    doc.text(`${resumo.percentual}% vistoriado`, infoX, y);
+
+    y += 22;
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(9.5);
+    doc.setTextColor(82, 82, 91);
+    doc.text(`Empresa: ${resumo.empresa}`, infoX, y);
+    y += 15;
+    doc.text(`Área: ${resumo.area}`, infoX, y);
+    y += 15;
+    doc.text(`Tipo: ${resumo.tipo}`, infoX, y);
+    y += 22;
+
+    const larguraCard = 92;
+    const alturaCard = 46;
+    const cards = [
+      { titulo: "TOTAL", valor: resumo.total, cor: [39, 39, 42] },
+      { titulo: "VISTORIADOS", valor: resumo.vistoriados, cor: [22, 163, 74] },
+      { titulo: "NÃO VIST.", valor: resumo.naoVistoriados, cor: [220, 38, 38] },
+    ];
+
+    cards.forEach((card, index) => {
+      const x = infoX + index * (larguraCard + 10);
+      doc.setFillColor(248, 250, 252);
+      doc.setDrawColor(229, 231, 235);
+      doc.roundedRect(x, y, larguraCard, alturaCard, 8, 8, "FD");
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(7.5);
+      doc.setTextColor(113, 113, 122);
+      doc.text(card.titulo, x + 9, y + 14);
+      doc.setFontSize(16);
+      doc.setTextColor(card.cor[0], card.cor[1], card.cor[2]);
+      doc.text(String(card.valor), x + 9, y + 35);
+    });
+
+    y += 68;
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8.2);
+    doc.setTextColor(82, 82, 91);
+    doc.text(
+      `Base real: ${resumo.origemTotal}. Main.dart: ${resumo.totalMainDart} | Estrutura fixa: ${resumo.totalCatalogoFixo} | Painel: ${resumo.totalCatalogo} | Histórico: ${resumo.totalHistoricoGeral}.`,
+      infoX,
+      y
+    );
+
+    doc.setFillColor(22, 163, 74);
+    doc.rect(margemX + 24, posicaoY + 178, 10, 10, "F");
+    doc.setTextColor(82, 82, 91);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(8.2);
+    doc.text("Vistoriados", margemX + 40, posicaoY + 187);
+
+    doc.setFillColor(220, 38, 38);
+    doc.rect(margemX + 118, posicaoY + 178, 10, 10, "F");
+    doc.text("Não vistoriados", margemX + 134, posicaoY + 187);
+
+    return posicaoY + alturaBloco + 18;
+  }
+
   async function carregarImagemComoDataUrl(url: string) {
     if (!url) return null;
 
@@ -2539,13 +5401,13 @@ export default function Home() {
 
     // Layout novo: identificação no topo e as fotos grandes lado a lado no espaço abaixo.
     // Isso evita foto pequena empilhada e aproveita melhor a largura da página.
-    const alturaBlocoTopo = quantidadeFotos > 1 ? 362 : 330;
-    const alturaFoto = quantidadeFotos > 1 ? 176 : 190;
+    const alturaBlocoTopo = quantidadeFotos > 1 ? 318 : 285;
+    const alturaFoto = quantidadeFotos > 1 ? 148 : 160;
     const espacoEntreFotos = 14;
     const larguraFoto = quantidadeFotos > 1
       ? (larguraTotal - 36 - espacoEntreFotos) / 2
       : 300;
-    const inicioFotosY = posicaoY + 144;
+    const inicioFotosY = posicaoY + 116;
     const inicioFotosX = quantidadeFotos > 1
       ? margemX + 18
       : margemX + (larguraTotal - larguraFoto) / 2;
@@ -2567,10 +5429,10 @@ export default function Home() {
     doc.roundedRect(margemX, posicaoY - 14, larguraTotal, alturaBlocoTopo, 10, 10, "FD");
 
     doc.setFillColor(254, 242, 242);
-    doc.roundedRect(margemX + 8, posicaoY - 6, larguraTotal - 16, 28, 8, 8, "F");
+    doc.roundedRect(margemX + 8, posicaoY - 6, larguraTotal - 16, 24, 8, 8, "F");
 
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(10);
+    doc.setFontSize(9);
     doc.setTextColor(127, 29, 29);
     doc.text(
       `${indice ? `${indice}. ` : ""}${obterEquipamento(vistoria)}`,
@@ -2578,7 +5440,7 @@ export default function Home() {
       posicaoY + 12
     );
 
-    let cursorInfoY = posicaoY + 42;
+    let cursorInfoY = posicaoY + 34;
     const larguraInfo = larguraTotal - 36;
 
     for (const linha of linhasInfo) {
@@ -2589,17 +5451,17 @@ export default function Home() {
 
       for (const parte of linhasQuebradas) {
         doc.setFont("helvetica", "bold");
-        doc.setFontSize(8.8);
+        doc.setFontSize(7.6);
         doc.setTextColor(39, 39, 42);
         doc.text(parte, margemX + 18, cursorInfoY);
-        cursorInfoY += 12;
+        cursorInfoY += 10;
       }
     }
 
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(10);
+    doc.setFontSize(8.8);
     doc.setTextColor(127, 29, 29);
-    doc.text(quantidadeFotos > 1 ? "Fotos da vistoria" : "Foto da vistoria", margemX + 18, inicioFotosY - 12);
+    doc.text(quantidadeFotos > 1 ? "Fotos da vistoria" : "Foto da vistoria", margemX + 18, inicioFotosY - 8);
 
     if (quantidadeFotos > 0) {
       for (const [indiceFoto, foto] of fotosRelatorio.entries()) {
@@ -2612,9 +5474,9 @@ export default function Home() {
         doc.roundedRect(fotoX, fotoY, larguraFoto, alturaFoto, 8, 8, "FD");
 
         doc.setFont("helvetica", "bold");
-        doc.setFontSize(8.5);
+        doc.setFontSize(7.5);
         doc.setTextColor(127, 29, 29);
-        doc.text(`Foto ${indiceFoto + 1}`, fotoX + 10, fotoY + 14);
+        doc.text(`Foto ${indiceFoto + 1}`, fotoX + 10, fotoY + 12);
 
         const dataUrl = await carregarImagemComoDataUrl(urlFoto);
 
@@ -2622,7 +5484,7 @@ export default function Home() {
           try {
             const dimensoes = await obterDimensoesImagem(dataUrl);
             const areaImagemLargura = larguraFoto - 20;
-            const areaImagemAltura = alturaFoto - 30;
+            const areaImagemAltura = alturaFoto - 26;
             const ajuste = dimensoes
               ? calcularImagemAjustada(
                   dimensoes.largura,
@@ -2643,7 +5505,7 @@ export default function Home() {
               dataUrl,
               formatoImagem,
               fotoX + 10 + ajuste.xOffset,
-              fotoY + 22 + ajuste.yOffset,
+              fotoY + 18 + ajuste.yOffset,
               ajuste.largura,
               ajuste.altura
             );
@@ -2670,49 +5532,65 @@ export default function Home() {
       doc.text("Sem foto sincronizada.", inicioFotosX + 12, inicioFotosY + 62);
     }
 
-    posicaoY += alturaBlocoTopo + 12;
+    posicaoY += alturaBlocoTopo + 8;
     posicaoY = garantirEspacoNoPdf(doc, posicaoY, 42);
 
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(10);
+    doc.setFontSize(8.8);
     doc.setTextColor(127, 29, 29);
     doc.text("Checklist da vistoria", margemX, posicaoY);
 
-    posicaoY += 17;
+    posicaoY += 13;
 
     if (checklist.length === 0) {
       doc.setFont("helvetica", "normal");
-      doc.setFontSize(9);
+      doc.setFontSize(7.8);
       doc.setTextColor(82, 82, 91);
       doc.text("Checklist não sincronizado.", margemX, posicaoY);
-      posicaoY += 18;
+      posicaoY += 14;
     } else {
       for (const item of checklist) {
         const linha = montarLinhaChecklistRelatorio(item);
         const linhas = doc.splitTextToSize(linha, larguraTotal - 8) as string[];
-        const alturaLinha = linhas.length * 12 + 7;
+        const alturaLinha = linhas.length * 9 + 5;
 
-        posicaoY = garantirEspacoNoPdf(doc, posicaoY, alturaLinha + 8);
+        posicaoY = garantirEspacoNoPdf(doc, posicaoY, alturaLinha + 5);
 
         doc.setFillColor(250, 250, 250);
         doc.setDrawColor(235, 235, 235);
-        doc.roundedRect(margemX, posicaoY - 10, larguraTotal, alturaLinha, 5, 5, "FD");
+        doc.roundedRect(margemX, posicaoY - 8, larguraTotal, alturaLinha, 4, 4, "FD");
 
         doc.setFont("helvetica", "normal");
-        doc.setFontSize(8.7);
+        doc.setFontSize(7.3);
         doc.setTextColor(39, 39, 42);
 
-        let linhaY = posicaoY + 2;
+        let linhaY = posicaoY + 1;
         for (const parte of linhas) {
           doc.text(parte, margemX + 8, linhaY);
-          linhaY += 12;
+          linhaY += 9;
         }
 
-        posicaoY += alturaLinha + 5;
+        posicaoY += alturaLinha + 3;
       }
     }
 
-    posicaoY += 16;
+    const alturaPagina = doc.internal.pageSize.getHeight();
+    const alturaObservacao = 38;
+    const espacoDisponivel = alturaPagina - 54 - posicaoY;
+
+    if (espacoDisponivel >= alturaObservacao + 6) {
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(7.8);
+      doc.setTextColor(127, 29, 29);
+      doc.text("Observações", margemX, posicaoY + 2);
+
+      doc.setFillColor(255, 255, 255);
+      doc.setDrawColor(225, 225, 225);
+      doc.roundedRect(margemX, posicaoY + 7, larguraTotal, alturaObservacao - 10, 4, 4, "FD");
+      posicaoY += alturaObservacao;
+    }
+
+    posicaoY += 8;
     return posicaoY;
   }
 
@@ -2829,30 +5707,46 @@ export default function Home() {
       return;
     }
 
+    const gruposPorArea = agruparVistoriasPorAreaRelatorio(itensUnicos);
+
     setGerandoRelatorioId(`GERAL-${acao}`);
 
     try {
       const { jsPDF } = await import("jspdf");
       const doc = new jsPDF("p", "pt", "a4");
-      const primeiro = itensUnicos[0];
-      const empresaTitulo = relEmpresa !== "TODAS" ? relEmpresa : obterEmpresaRelatorio(primeiro);
-      const areaTitulo = relArea !== "TODAS" ? relArea : obterAreaRelatorio(primeiro);
-      const tipoTitulo = relTipo !== "TODOS" ? relTipo : obterTipo(primeiro);
-      const titulo = `RELATÓRIO GERAL - ${empresaTitulo} / ${areaTitulo} / ${tipoTitulo}`;
-      const subtitulo = `${itensUnicos.length} equipamento(s) único(s) encontrado(s) | Período: ${relDataInicio || "início"} até ${relDataFim || "hoje"}`;
 
-      let posicaoY = escreverCabecalhoRelatorio(doc, titulo, subtitulo);
+      for (const [indiceGrupo, grupo] of gruposPorArea.entries()) {
+        if (indiceGrupo > 0) {
+          doc.addPage();
+        }
 
-      for (const [indice, vistoria] of itensUnicos.entries()) {
-        const checklistRelatorio = await buscarRespostasDaVistoriaParaRelatorio(vistoria.id);
+        const resumoArea = calcularResumoAreaRelatorio(grupo);
+        const titulo = `RELATÓRIO GERAL - ${grupo.empresa} / ${grupo.area} / ${grupo.tipo}`;
+        const subtitulo = `${grupo.itens.length} de ${resumoArea.total} equipamento(s) vistoriado(s) | ${resumoArea.percentual}% da área | Período: ${relDataInicio || "início"} até ${relDataFim || "hoje"}`;
 
-        posicaoY = await escreverBlocoVistoriaTexto(
+        let posicaoY = escreverCabecalhoRelatorio(doc, titulo, subtitulo);
+        posicaoY = escreverDashboardAreaPdf(doc, resumoArea, posicaoY);
+
+        // O dashboard fica sozinho na primeira página da área.
+        // As vistorias detalhadas sempre começam na página seguinte.
+        doc.addPage();
+        posicaoY = escreverCabecalhoRelatorio(
           doc,
-          vistoria,
-          posicaoY,
-          indice + 1,
-          checklistRelatorio
+          titulo,
+          `Página 2 - Detalhamento das vistorias | ${grupo.itens.length} equipamento(s) vistoriado(s) no filtro aplicado`
         );
+
+        for (const [indice, vistoria] of grupo.itens.entries()) {
+          const checklistRelatorio = await buscarRespostasDaVistoriaParaRelatorio(vistoria.id);
+
+          posicaoY = await escreverBlocoVistoriaTexto(
+            doc,
+            vistoria,
+            posicaoY,
+            indice + 1,
+            checklistRelatorio
+          );
+        }
       }
 
       await finalizarPdfRelatorio(
