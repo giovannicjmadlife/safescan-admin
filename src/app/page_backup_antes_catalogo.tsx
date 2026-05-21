@@ -52,7 +52,6 @@ type TelaAdmin =
   | "dashboard"
   | "vistorias"
   | "empresas"
-  | "catalogo"
   | "colaboradores"
   | "dispositivos"
   | "relatorios"
@@ -87,15 +86,6 @@ const tiposDashboard = [
 
 const coresGrafico = ["#991b1b", "#dc2626", "#f97316", "#facc15", "#7f1d1d"];
 
-const TIPOS_CATALOGO = [
-  { valor: "EXTINTORES", label: "Extintores" },
-  { valor: "HIDRANTES", label: "Hidrantes" },
-  { valor: "LAVA_OLHOS", label: "Lava-olhos" },
-  { valor: "TESTE_HIDROSTATICO", label: "Teste hidrostático" },
-];
-
-const OPCAO_NOVO_CATALOGO = "__NOVO__";
-
 function normalizarTexto(valor: unknown) {
   return String(valor ?? "")
     .trim()
@@ -116,89 +106,24 @@ function pegarCampo(linha: LinhaBanco, campos: string[]) {
   return "";
 }
 
-function converterValorEmData(valor: unknown) {
-  if (!valor) return null;
-
-  if (valor instanceof Date && !Number.isNaN(valor.getTime())) {
-    return valor;
-  }
-
-  const texto = String(valor).trim();
-
-  if (!texto || texto.toLowerCase() === "null" || texto.toLowerCase() === "undefined") {
-    return null;
-  }
-
-  const dataDireta = new Date(texto);
-
-  if (!Number.isNaN(dataDireta.getTime())) {
-    return dataDireta;
-  }
-
-  const formatoBrasileiro = texto.match(
-    /^(\d{2})\/(\d{2})\/(\d{4})(?:[ T](\d{2}):(\d{2})(?::(\d{2}))?)?/
-  );
-
-  if (formatoBrasileiro) {
-    const [, dia, mes, ano, hora = "0", minuto = "0", segundo = "0"] = formatoBrasileiro;
-    const data = new Date(
-      Number(ano),
-      Number(mes) - 1,
-      Number(dia),
-      Number(hora),
-      Number(minuto),
-      Number(segundo)
-    );
-
-    if (!Number.isNaN(data.getTime())) {
-      return data;
-    }
-  }
-
-  const formatoIsoSemTimezone = texto.match(
-    /^(\d{4})-(\d{2})-(\d{2})(?:[ T](\d{2}):(\d{2})(?::(\d{2}))?)?/
-  );
-
-  if (formatoIsoSemTimezone) {
-    const [, ano, mes, dia, hora = "0", minuto = "0", segundo = "0"] = formatoIsoSemTimezone;
-    const data = new Date(
-      Number(ano),
-      Number(mes) - 1,
-      Number(dia),
-      Number(hora),
-      Number(minuto),
-      Number(segundo)
-    );
-
-    if (!Number.isNaN(data.getTime())) {
-      return data;
-    }
-  }
-
-  return null;
-}
-
 function pegarData(linha: LinhaBanco) {
   const candidatos = [
-    "data_vistoria",
-    "dataVistoria",
-    "data_vistoria_iso",
-    "data",
-    "data_local",
-    "dataLocal",
-    "criadoEmIso",
-    "criado_em_iso",
-    "criado_em",
     "created_at",
+    "criado_em",
+    "data",
+    "data_vistoria",
     "sincronizado_em",
     "updated_at",
-    "atualizadoEmIso",
   ];
 
   for (const campo of candidatos) {
-    const data = converterValorEmData(linha[campo]);
+    const valor = linha[campo];
 
-    if (data) {
+    if (!valor) continue;
+
+    const data = new Date(String(valor));
+
+    if (!Number.isNaN(data.getTime())) {
       return data;
     }
   }
@@ -224,42 +149,10 @@ function formatarData(data: Date | null) {
   }).format(data);
 }
 
-function chaveDataLocal(data: Date | null) {
-  if (!data) return "";
-
-  const ano = data.getFullYear();
-  const mes = String(data.getMonth() + 1).padStart(2, "0");
-  const dia = String(data.getDate()).padStart(2, "0");
-
-  return `${ano}-${mes}-${dia}`;
-}
-
-function dataDentroDoPeriodo(
-  data: Date | null,
-  dataInicio: string,
-  dataFim: string
-) {
-  if (!dataInicio && !dataFim) return true;
-  if (!data) return false;
-
-  const dataRegistro = chaveDataLocal(data);
-
-  if (dataInicio && dataRegistro < dataInicio) {
-    return false;
-  }
-
-  if (dataFim && dataRegistro > dataFim) {
-    return false;
-  }
-
-  return true;
-}
-
 function tituloDaTela(tela: TelaAdmin) {
   if (tela === "dashboard") return "Dashboard Geral";
   if (tela === "vistorias") return "Vistorias";
   if (tela === "empresas") return "Empresas";
-  if (tela === "catalogo") return "Catálogo";
   if (tela === "colaboradores") return "Colaboradores";
   if (tela === "dispositivos") return "Dispositivos";
   if (tela === "relatorios") return "Relatórios";
@@ -277,10 +170,6 @@ function descricaoDaTela(tela: TelaAdmin) {
 
   if (tela === "empresas") {
     return "Resumo executivo por unidade, tipo de equipamento, não conformidades e última vistoria.";
-  }
-
-  if (tela === "catalogo") {
-    return "Cadastro de empresas, áreas, tipos e equipamentos que aparecerão no aplicativo.";
   }
 
   if (tela === "colaboradores") {
@@ -560,9 +449,6 @@ function obterUrlFoto(foto: LinhaBanco) {
     pegarCampo(foto, [
       "url",
       "foto_url",
-      "fotoUrl",
-      "foto_url_1",
-      "fotoUrl1",
       "public_url",
       "arquivo_url",
       "storage_url",
@@ -588,84 +474,6 @@ function obterUrlFoto(foto: LinhaBanco) {
   const { data } = supabase.storage.from(BUCKET_FOTOS).getPublicUrl(caminhoLimpo);
 
   return data.publicUrl || valor;
-}
-
-function normalizarUrlFoto(valor: unknown) {
-  const texto = String(valor ?? "").trim();
-
-  if (!texto) return "";
-
-  if (
-    texto.startsWith("http") ||
-    texto.startsWith("data:") ||
-    texto.startsWith("blob:")
-  ) {
-    return texto;
-  }
-
-  const caminhoLimpo = texto
-    .replace(/^\/+/, "")
-    .replace(`${BUCKET_FOTOS}/`, "");
-
-  const { data } = supabase.storage.from(BUCKET_FOTOS).getPublicUrl(caminhoLimpo);
-
-  return data.publicUrl || texto;
-}
-
-function adicionarFotoUnica(lista: LinhaBanco[], foto: LinhaBanco) {
-  const url = obterUrlFoto(foto);
-  if (!url) return;
-
-  const jaExiste = lista.some((item) => obterUrlFoto(item) === url);
-  if (jaExiste) return;
-
-  lista.push(foto);
-}
-
-function obterFotosComFallback(vistoria: LinhaBanco, todasFotos: LinhaBanco[]) {
-  const fotosEncontradas: LinhaBanco[] = [];
-
-  const fotosTabela = todasFotos
-    .filter((foto) => String(foto.vistoria_id) === String(vistoria.id))
-    .sort((a, b) => {
-      const ordemA = Number(a.ordem ?? a.posicao ?? 999);
-      const ordemB = Number(b.ordem ?? b.posicao ?? 999);
-      return ordemA - ordemB;
-    });
-
-  for (const foto of fotosTabela) {
-    adicionarFotoUnica(fotosEncontradas, foto);
-  }
-
-  const camposDaVistoria = [
-    { campo: "foto_url", origem: "vistorias.foto_url", ordem: 1 },
-    { campo: "fotoUrl", origem: "vistorias.fotoUrl", ordem: 1 },
-    { campo: "foto_url_1", origem: "vistorias.foto_url_1", ordem: 1 },
-    { campo: "fotoUrl1", origem: "vistorias.fotoUrl1", ordem: 1 },
-    { campo: "foto_url2", origem: "vistorias.foto_url2", ordem: 2 },
-    { campo: "fotoUrl2", origem: "vistorias.fotoUrl2", ordem: 2 },
-    { campo: "foto_url_2", origem: "vistorias.foto_url_2", ordem: 2 },
-    { campo: "segunda_foto_url", origem: "vistorias.segunda_foto_url", ordem: 2 },
-  ];
-
-  for (const item of camposDaVistoria) {
-    const url = normalizarUrlFoto(vistoria[item.campo]);
-    if (!url) continue;
-
-    adicionarFotoUnica(fotosEncontradas, {
-      id: `${String(vistoria.id)}-${item.campo}`,
-      vistoria_id: vistoria.id,
-      foto_url: url,
-      origem: item.origem,
-      ordem: item.ordem,
-    });
-  }
-
-  return fotosEncontradas.sort((a, b) => {
-    const ordemA = Number(a.ordem ?? a.posicao ?? 999);
-    const ordemB = Number(b.ordem ?? b.posicao ?? 999);
-    return ordemA - ordemB;
-  });
 }
 
 function obterRespostaExibida(resposta: LinhaBanco) {
@@ -700,16 +508,12 @@ export default function Home() {
   const [fotos, setFotos] = useState<LinhaBanco[]>([]);
   const [colaboradores, setColaboradores] = useState<LinhaBanco[]>([]);
   const [dispositivos, setDispositivos] = useState<LinhaBanco[]>([]);
-  const [catalogo, setCatalogo] = useState<LinhaBanco[]>([]);
 
   const [carregandoColaboradores, setCarregandoColaboradores] = useState(false);
   const [carregandoDispositivos, setCarregandoDispositivos] = useState(false);
-  const [carregandoCatalogo, setCarregandoCatalogo] = useState(false);
   const [atualizandoDispositivoId, setAtualizandoDispositivoId] = useState<string | null>(null);
   const [atualizandoColaboradorId, setAtualizandoColaboradorId] = useState<string | null>(null);
-  const [atualizandoCatalogoId, setAtualizandoCatalogoId] = useState<string | null>(null);
   const [salvandoColaborador, setSalvandoColaborador] = useState(false);
-  const [salvandoCatalogo, setSalvandoCatalogo] = useState(false);
 
   const [nomeColaborador, setNomeColaborador] = useState("");
   const [emailColaborador, setEmailColaborador] = useState("");
@@ -717,20 +521,6 @@ export default function Home() {
   const [buscaColaborador, setBuscaColaborador] = useState("");
   const [buscaDispositivo, setBuscaDispositivo] = useState("");
   const [filtroStatusDispositivo, setFiltroStatusDispositivo] = useState("TODOS");
-
-  const [catalogoEditandoId, setCatalogoEditandoId] = useState<string | null>(null);
-  const [catalogoModo, setCatalogoModo] = useState<"CADASTRAR" | "INATIVAR">("CADASTRAR");
-  const [catalogoEmpresaModo, setCatalogoEmpresaModo] = useState<"EXISTENTE" | "NOVO">("EXISTENTE");
-  const [catalogoAreaModo, setCatalogoAreaModo] = useState<"EXISTENTE" | "NOVO">("EXISTENTE");
-  const [catalogoEmpresa, setCatalogoEmpresa] = useState("");
-  const [catalogoArea, setCatalogoArea] = useState("");
-  const [catalogoTipo, setCatalogoTipo] = useState("EXTINTORES");
-  const [catalogoEquipamento, setCatalogoEquipamento] = useState("");
-  const [catalogoEquipamentoInativarId, setCatalogoEquipamentoInativarId] = useState("");
-  const [catalogoStatus, setCatalogoStatus] = useState("ATIVO");
-  const [catalogoOrdem, setCatalogoOrdem] = useState("0");
-  const [buscaCatalogo, setBuscaCatalogo] = useState("");
-  const [filtroStatusCatalogo, setFiltroStatusCatalogo] = useState("TODOS");
 
   const [vistoriaSelecionadaId, setVistoriaSelecionadaId] = useState<
     string | null
@@ -805,8 +595,7 @@ export default function Home() {
     const { data: vistoriasData, error: erroVistorias } = await supabase
       .from("vistorias")
       .select("*")
-      .order("created_at", { ascending: false })
-      .limit(10000);
+      .limit(3000);
 
     if (erroVistorias) {
       setErro(`Erro ao buscar vistorias: ${erroVistorias.message}`);
@@ -919,297 +708,6 @@ export default function Home() {
     }
   }
 
-
-  async function carregarCatalogo() {
-    setCarregandoCatalogo(true);
-    setErro("");
-
-    try {
-      const token = await obterTokenDeAcesso();
-
-      const resposta = await fetch("/api/admin/listar-catalogo", {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      const resultado = await resposta.json();
-
-      if (!resposta.ok) {
-        throw new Error(resultado?.erro || "Erro ao carregar catálogo.");
-      }
-
-      setCatalogo(resultado.catalogo ?? []);
-    } catch (error) {
-      setErro(
-        error instanceof Error
-          ? error.message
-          : "Erro inesperado ao carregar catálogo."
-      );
-    } finally {
-      setCarregandoCatalogo(false);
-    }
-  }
-
-  function limparFormularioCatalogo() {
-    setCatalogoEditandoId(null);
-    setCatalogoModo("CADASTRAR");
-    setCatalogoEmpresaModo("EXISTENTE");
-    setCatalogoAreaModo("EXISTENTE");
-    setCatalogoEmpresa("");
-    setCatalogoArea("");
-    setCatalogoTipo("EXTINTORES");
-    setCatalogoEquipamento("");
-    setCatalogoEquipamentoInativarId("");
-    setCatalogoStatus("ATIVO");
-    setCatalogoOrdem("0");
-  }
-
-  function alterarModoCatalogo(modo: "CADASTRAR" | "INATIVAR") {
-    setCatalogoModo(modo);
-    setCatalogoEditandoId(null);
-    setCatalogoEquipamento("");
-    setCatalogoEquipamentoInativarId("");
-    setCatalogoStatus(modo === "INATIVAR" ? "INATIVO" : "ATIVO");
-  }
-
-  function selecionarEmpresaCatalogo(valor: string) {
-    setCatalogoArea("");
-    setCatalogoEquipamento("");
-    setCatalogoEquipamentoInativarId("");
-
-    if (valor === OPCAO_NOVO_CATALOGO) {
-      setCatalogoEmpresaModo("NOVO");
-      setCatalogoEmpresa("");
-      setCatalogoAreaModo("NOVO");
-      return;
-    }
-
-    setCatalogoEmpresaModo("EXISTENTE");
-    setCatalogoEmpresa(valor);
-    setCatalogoAreaModo("EXISTENTE");
-  }
-
-  function selecionarAreaCatalogo(valor: string) {
-    setCatalogoEquipamento("");
-    setCatalogoEquipamentoInativarId("");
-
-    if (valor === OPCAO_NOVO_CATALOGO) {
-      setCatalogoAreaModo("NOVO");
-      setCatalogoArea("");
-      return;
-    }
-
-    setCatalogoAreaModo("EXISTENTE");
-    setCatalogoArea(valor);
-  }
-
-  function obterEmpresaCatalogoSelecionada() {
-    return catalogoEmpresa.trim();
-  }
-
-  function obterAreaCatalogoSelecionada() {
-    return catalogoArea.trim();
-  }
-
-  function proximaOrdemCatalogo(empresa: string, area: string, tipo: string) {
-    const empresaNormalizada = normalizarTexto(empresa);
-    const areaNormalizada = normalizarTexto(area);
-    const tipoNormalizado = normalizarTexto(tipo);
-
-    const maiorOrdem = catalogo
-      .filter(
-        (item) =>
-          normalizarTexto(item.empresa_nome) === empresaNormalizada &&
-          normalizarTexto(item.area_nome) === areaNormalizada &&
-          normalizarTexto(item.tipo) === tipoNormalizado
-      )
-      .reduce((maior, item) => {
-        const ordem = Number(item.ordem ?? 0);
-        return Number.isFinite(ordem) && ordem > maior ? ordem : maior;
-      }, 0);
-
-    return maiorOrdem + 1;
-  }
-
-  function editarItemCatalogo(item: LinhaBanco) {
-    setCatalogoEditandoId(String(item.id ?? ""));
-    setCatalogoModo("CADASTRAR");
-    setCatalogoEmpresaModo("EXISTENTE");
-    setCatalogoAreaModo("EXISTENTE");
-    setCatalogoEmpresa(String(item.empresa_nome ?? ""));
-    setCatalogoArea(String(item.area_nome ?? ""));
-    setCatalogoTipo(String(item.tipo ?? "EXTINTORES"));
-    setCatalogoEquipamento(String(item.equipamento_nome ?? ""));
-    setCatalogoEquipamentoInativarId("");
-    setCatalogoStatus(statusCatalogo(item.status));
-    setCatalogoOrdem(String(item.ordem ?? "0"));
-    setTelaAtiva("catalogo");
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  }
-
-  async function salvarItemCatalogo() {
-    setErro("");
-    setAviso("");
-
-    if (catalogoModo === "INATIVAR") {
-      await inativarEquipamentoSelecionado();
-      return;
-    }
-
-    const empresa_nome = obterEmpresaCatalogoSelecionada();
-    const area_nome = obterAreaCatalogoSelecionada();
-    const tipo = catalogoTipo.trim().toUpperCase();
-    const equipamento_nome = catalogoEquipamento.trim();
-    const status = catalogoEditandoId ? statusCatalogo(catalogoStatus) : "ATIVO";
-    const ordem = catalogoEditandoId
-      ? Number(catalogoOrdem || "0")
-      : proximaOrdemCatalogo(empresa_nome, area_nome, tipo);
-
-    if (!empresa_nome) {
-      setErro("Informe a empresa.");
-      return;
-    }
-
-    if (!area_nome) {
-      setErro("Informe a área.");
-      return;
-    }
-
-    if (!tipo) {
-      setErro("Informe o tipo do equipamento.");
-      return;
-    }
-
-    if (!equipamento_nome) {
-      setErro("Informe o equipamento.");
-      return;
-    }
-
-    setSalvandoCatalogo(true);
-
-    try {
-      const token = await obterTokenDeAcesso();
-
-      const resposta = await fetch("/api/admin/salvar-catalogo", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          id: catalogoEditandoId,
-          empresa_nome,
-          area_nome,
-          tipo,
-          equipamento_nome,
-          status,
-          ordem: Number.isFinite(ordem) ? ordem : 0,
-        }),
-      });
-
-      const resultado = await resposta.json();
-
-      if (!resposta.ok) {
-        throw new Error(resultado?.erro || "Erro ao salvar catálogo.");
-      }
-
-      setAviso(catalogoEditandoId ? "Equipamento atualizado com sucesso." : "Equipamento cadastrado com sucesso.");
-      limparFormularioCatalogo();
-      await carregarCatalogo();
-    } catch (error) {
-      setErro(
-        error instanceof Error
-          ? error.message
-          : "Erro inesperado ao salvar catálogo."
-      );
-    } finally {
-      setSalvandoCatalogo(false);
-    }
-  }
-
-  async function atualizarStatusCatalogo(
-    item: LinhaBanco,
-    acao: "INATIVAR" | "REATIVAR" | "EXCLUIR"
-  ) {
-    setErro("");
-    setAviso("");
-
-    const id = String(item.id ?? "").trim();
-    const equipamento = String(item.equipamento_nome ?? "equipamento");
-
-    if (!id) {
-      setErro("Não foi possível identificar este equipamento.");
-      return;
-    }
-
-    if (acao === "EXCLUIR") {
-      const confirmar = window.confirm(
-        `Tem certeza que deseja excluir ${equipamento} do catálogo? As vistorias antigas continuarão preservadas.`
-      );
-
-      if (!confirmar) return;
-    }
-
-    setAtualizandoCatalogoId(`${id}-${acao}`);
-
-    try {
-      const token = await obterTokenDeAcesso();
-
-      const resposta = await fetch("/api/admin/atualizar-catalogo", {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ id, acao }),
-      });
-
-      const resultado = await resposta.json();
-
-      if (!resposta.ok) {
-        throw new Error(resultado?.erro || "Erro ao atualizar catálogo.");
-      }
-
-      if (acao === "INATIVAR") {
-        setAviso(`Equipamento ${equipamento} inativado. Ele não aparecerá no app.`);
-      } else if (acao === "REATIVAR") {
-        setAviso(`Equipamento ${equipamento} reativado. Ele voltará a aparecer no app.`);
-      } else {
-        setAviso(`Equipamento ${equipamento} excluído do catálogo.`);
-      }
-
-      await carregarCatalogo();
-    } catch (error) {
-      setErro(
-        error instanceof Error
-          ? error.message
-          : "Erro inesperado ao atualizar catálogo."
-      );
-    } finally {
-      setAtualizandoCatalogoId(null);
-    }
-  }
-
-
-  async function inativarEquipamentoSelecionado() {
-    setErro("");
-    setAviso("");
-
-    const item = catalogo.find(
-      (equipamento) => String(equipamento.id ?? "") === catalogoEquipamentoInativarId
-    );
-
-    if (!item) {
-      setErro("Selecione um equipamento ativo para inativar.");
-      return;
-    }
-
-    await atualizarStatusCatalogo(item, "INATIVAR");
-    setCatalogoEquipamentoInativarId("");
-  }
-
   async function atualizarStatusDispositivo(
     id: string,
     status: "PENDENTE" | "APROVADO" | "BLOQUEADO"
@@ -1280,18 +778,6 @@ export default function Home() {
     }
 
     return "bg-yellow-100 text-yellow-900 hover:bg-yellow-100";
-  }
-
-
-  function statusCatalogo(valor: unknown) {
-    const status = normalizarTexto(valor || "ATIVO");
-    return status === "INATIVO" ? "INATIVO" : "ATIVO";
-  }
-
-  function classeBadgeCatalogo(status: unknown) {
-    return statusCatalogo(status) === "ATIVO"
-      ? "bg-green-100 text-green-800 hover:bg-green-100"
-      : "bg-zinc-200 text-zinc-700 hover:bg-zinc-200";
   }
 
   function gerarSenhaTemporaria() {
@@ -1477,7 +963,6 @@ export default function Home() {
     setFotos([]);
     setColaboradores([]);
     setDispositivos([]);
-    setCatalogo([]);
     setEmail("");
     setSenha("");
     setNomeColaborador("");
@@ -1486,9 +971,6 @@ export default function Home() {
     setBuscaColaborador("");
     setBuscaDispositivo("");
     setFiltroStatusDispositivo("TODOS");
-    limparFormularioCatalogo();
-    setBuscaCatalogo("");
-    setFiltroStatusCatalogo("TODOS");
     setTelaAtiva("dashboard");
     setVistoriaSelecionadaId(null);
   }
@@ -1540,7 +1022,6 @@ export default function Home() {
     if (sessionEmail) {
       carregarColaboradores();
       carregarDispositivos();
-      carregarCatalogo();
     }
   }, [sessionEmail]);
 
@@ -1866,8 +1347,20 @@ export default function Home() {
 
         const data = pegarData(vistoria);
 
-        if (!dataDentroDoPeriodo(data, filtroDataInicio, filtroDataFim)) {
-          return false;
+        if (filtroDataInicio) {
+          const inicio = new Date(`${filtroDataInicio}T00:00:00`);
+
+          if (!data || data < inicio) {
+            return false;
+          }
+        }
+
+        if (filtroDataFim) {
+          const fim = new Date(`${filtroDataFim}T23:59:59`);
+
+          if (!data || data > fim) {
+            return false;
+          }
         }
 
         return true;
@@ -1915,7 +1408,33 @@ export default function Home() {
   const fotosDaVistoria = useMemo(() => {
     if (!vistoriaSelecionada) return [];
 
-    return obterFotosComFallback(vistoriaSelecionada, fotos);
+    const fotosTabela = fotos.filter(
+      (foto) => String(foto.vistoria_id) === String(vistoriaSelecionada.id)
+    );
+
+    const urlFotoPrincipal = obterUrlFoto(vistoriaSelecionada);
+
+    if (!urlFotoPrincipal) {
+      return fotosTabela;
+    }
+
+    const fotoJaExiste = fotosTabela.some(
+      (foto) => obterUrlFoto(foto) === urlFotoPrincipal
+    );
+
+    if (fotoJaExiste) {
+      return fotosTabela;
+    }
+
+    return [
+      {
+        id: `${String(vistoriaSelecionada.id)}-foto-principal`,
+        vistoria_id: vistoriaSelecionada.id,
+        foto_url: urlFotoPrincipal,
+        origem: "vistorias.foto_url",
+      },
+      ...fotosTabela,
+    ];
   }, [fotos, vistoriaSelecionada]);
 
   function totalNaoConformidadesDaVistoria(vistoriaId: unknown) {
@@ -1992,101 +1511,6 @@ export default function Home() {
         return dataB - dataA;
       });
   }, [dispositivos, buscaDispositivo, filtroStatusDispositivo]);
-
-
-  const empresasCatalogoDisponiveis = useMemo(() => {
-    return Array.from(
-      new Set(
-        catalogo
-          .map((item) => String(item.empresa_nome ?? "").trim())
-          .filter(Boolean)
-      )
-    ).sort((a, b) => a.localeCompare(b));
-  }, [catalogo]);
-
-  const areasCatalogoDisponiveis = useMemo(() => {
-    const empresaSelecionada = normalizarTexto(catalogoEmpresa);
-
-    if (!empresaSelecionada) return [];
-
-    return Array.from(
-      new Set(
-        catalogo
-          .filter(
-            (item) => normalizarTexto(item.empresa_nome) === empresaSelecionada
-          )
-          .map((item) => String(item.area_nome ?? "").trim())
-          .filter(Boolean)
-      )
-    ).sort((a, b) => a.localeCompare(b));
-  }, [catalogo, catalogoEmpresa]);
-
-  const equipamentosAtivosCatalogoDisponiveis = useMemo(() => {
-    const empresaSelecionada = normalizarTexto(catalogoEmpresa);
-    const areaSelecionada = normalizarTexto(catalogoArea);
-    const tipoSelecionado = normalizarTexto(catalogoTipo);
-
-    if (!empresaSelecionada || !areaSelecionada || !tipoSelecionado) return [];
-
-    return catalogo
-      .filter(
-        (item) =>
-          normalizarTexto(item.empresa_nome) === empresaSelecionada &&
-          normalizarTexto(item.area_nome) === areaSelecionada &&
-          normalizarTexto(item.tipo) === tipoSelecionado &&
-          statusCatalogo(item.status) === "ATIVO"
-      )
-      .sort((a, b) => {
-        const ordemA = Number(a.ordem ?? 0);
-        const ordemB = Number(b.ordem ?? 0);
-        if (ordemA !== ordemB) return ordemA - ordemB;
-        return String(a.equipamento_nome ?? "").localeCompare(String(b.equipamento_nome ?? ""));
-      });
-  }, [catalogo, catalogoEmpresa, catalogoArea, catalogoTipo]);
-
-  const catalogoFiltrado = useMemo(() => {
-    const busca = normalizarTexto(buscaCatalogo);
-
-    return catalogo
-      .filter((item) => {
-        const status = statusCatalogo(item.status);
-
-        if (filtroStatusCatalogo !== "TODOS" && status !== filtroStatusCatalogo) {
-          return false;
-        }
-
-        if (!busca) return true;
-
-        const texto = normalizarTexto(
-          [
-            item.empresa_nome,
-            item.area_nome,
-            item.tipo,
-            item.equipamento_nome,
-            item.status,
-            item.id,
-          ].join(" ")
-        );
-
-        return texto.includes(busca);
-      })
-      .sort((a, b) => {
-        const empresaA = String(a.empresa_nome ?? "").localeCompare(String(b.empresa_nome ?? ""));
-        if (empresaA !== 0) return empresaA;
-
-        const areaA = String(a.area_nome ?? "").localeCompare(String(b.area_nome ?? ""));
-        if (areaA !== 0) return areaA;
-
-        const tipoA = String(a.tipo ?? "").localeCompare(String(b.tipo ?? ""));
-        if (tipoA !== 0) return tipoA;
-
-        const ordemA = Number(a.ordem ?? 0);
-        const ordemB = Number(b.ordem ?? 0);
-        if (ordemA !== ordemB) return ordemA - ordemB;
-
-        return String(a.equipamento_nome ?? "").localeCompare(String(b.equipamento_nome ?? ""));
-      });
-  }, [catalogo, buscaCatalogo, filtroStatusCatalogo]);
 
   function obterEmpresaRelatorio(vistoria: LinhaBanco) {
     return String(
@@ -2177,8 +1601,20 @@ export default function Home() {
 
       const data = pegarData(vistoria);
 
-      if (!dataDentroDoPeriodo(data, mapaDataInicio, mapaDataFim)) {
-        return false;
+      if (mapaDataInicio) {
+        const inicio = new Date(`${mapaDataInicio}T00:00:00`);
+
+        if (!data || data < inicio) {
+          return false;
+        }
+      }
+
+      if (mapaDataFim) {
+        const fim = new Date(`${mapaDataFim}T23:59:59`);
+
+        if (!data || data > fim) {
+          return false;
+        }
       }
 
       if (busca) {
@@ -2299,8 +1735,20 @@ export default function Home() {
 
         const data = pegarData(vistoria);
 
-        if (!dataDentroDoPeriodo(data, relDataInicio, relDataFim)) {
-          return false;
+        if (relDataInicio) {
+          const inicio = new Date(`${relDataInicio}T00:00:00`);
+
+          if (!data || data < inicio) {
+            return false;
+          }
+        }
+
+        if (relDataFim) {
+          const fim = new Date(`${relDataFim}T23:59:59`);
+
+          if (!data || data > fim) {
+            return false;
+          }
         }
 
         return true;
@@ -2361,7 +1809,33 @@ export default function Home() {
   }
 
   function obterFotosDaVistoriaParaRelatorio(vistoria: LinhaBanco) {
-    return obterFotosComFallback(vistoria, fotos);
+    const fotosTabela = fotos.filter(
+      (foto) => String(foto.vistoria_id) === String(vistoria.id)
+    );
+
+    const urlFotoPrincipal = obterUrlFoto(vistoria);
+
+    if (!urlFotoPrincipal) {
+      return fotosTabela;
+    }
+
+    const fotoJaExiste = fotosTabela.some(
+      (foto) => obterUrlFoto(foto) === urlFotoPrincipal
+    );
+
+    if (fotoJaExiste) {
+      return fotosTabela;
+    }
+
+    return [
+      {
+        id: `${String(vistoria.id)}-foto-principal`,
+        vistoria_id: vistoria.id,
+        foto_url: urlFotoPrincipal,
+        origem: "vistorias.foto_url",
+      },
+      ...fotosTabela,
+    ];
   }
 
   function chaveUnicaRelatorio(vistoria: LinhaBanco) {
@@ -2528,29 +2002,18 @@ export default function Home() {
     doc: any,
     vistoria: LinhaBanco,
     posicaoY: number,
-    indice?: number,
-    respostasExternas?: LinhaBanco[]
+    indice?: number
   ) {
     const margemX = 40;
     const larguraTotal = 515;
-    const checklist = respostasExternas ?? obterRespostasUnicasDaVistoria(vistoria.id);
-    const fotosRelatorio = obterFotosDaVistoriaParaRelatorio(vistoria).slice(0, 2);
-    const quantidadeFotos = fotosRelatorio.length;
+    const larguraFoto = 205;
+    const alturaFoto = 150;
+    const espacoEntreColunas = 18;
+    const posicaoXFoto = margemX + larguraTotal - larguraFoto - 12;
+    const larguraInfo = larguraTotal - larguraFoto - espacoEntreColunas - 18;
+    const checklist = obterRespostasUnicasDaVistoria(vistoria.id);
 
-    // Layout novo: identificação no topo e as fotos grandes lado a lado no espaço abaixo.
-    // Isso evita foto pequena empilhada e aproveita melhor a largura da página.
-    const alturaBlocoTopo = quantidadeFotos > 1 ? 362 : 330;
-    const alturaFoto = quantidadeFotos > 1 ? 176 : 190;
-    const espacoEntreFotos = 14;
-    const larguraFoto = quantidadeFotos > 1
-      ? (larguraTotal - 36 - espacoEntreFotos) / 2
-      : 300;
-    const inicioFotosY = posicaoY + 144;
-    const inicioFotosX = quantidadeFotos > 1
-      ? margemX + 18
-      : margemX + (larguraTotal - larguraFoto) / 2;
-
-    posicaoY = garantirEspacoNoPdf(doc, posicaoY, alturaBlocoTopo + 32);
+    posicaoY = garantirEspacoNoPdf(doc, posicaoY, 228);
 
     const linhasInfo = [
       `Equipamento: ${obterEquipamento(vistoria)}`,
@@ -2562,12 +2025,14 @@ export default function Home() {
       `GPS: ${String(vistoria.gps ?? "Não informado")}`,
     ];
 
+    const alturaBlocoTopo = 196;
+
     doc.setFillColor(255, 255, 255);
     doc.setDrawColor(196, 201, 209);
     doc.roundedRect(margemX, posicaoY - 14, larguraTotal, alturaBlocoTopo, 10, 10, "FD");
 
     doc.setFillColor(254, 242, 242);
-    doc.roundedRect(margemX + 8, posicaoY - 6, larguraTotal - 16, 28, 8, 8, "F");
+    doc.roundedRect(margemX + 8, posicaoY - 6, larguraInfo + 8, 28, 8, 8, "F");
 
     doc.setFont("helvetica", "bold");
     doc.setFontSize(10);
@@ -2579,7 +2044,6 @@ export default function Home() {
     );
 
     let cursorInfoY = posicaoY + 42;
-    const larguraInfo = larguraTotal - 36;
 
     for (const linha of linhasInfo) {
       const [rotulo, ...restante] = linha.split(":");
@@ -2592,82 +2056,71 @@ export default function Home() {
         doc.setFontSize(8.8);
         doc.setTextColor(39, 39, 42);
         doc.text(parte, margemX + 18, cursorInfoY);
-        cursorInfoY += 12;
+        cursorInfoY += 13;
       }
     }
 
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(10);
-    doc.setTextColor(127, 29, 29);
-    doc.text(quantidadeFotos > 1 ? "Fotos da vistoria" : "Foto da vistoria", margemX + 18, inicioFotosY - 12);
+    doc.setFontSize(9);
+    doc.setTextColor(39, 39, 42);
+    doc.text("Foto da vistoria", posicaoXFoto, posicaoY + 8);
 
-    if (quantidadeFotos > 0) {
-      for (const [indiceFoto, foto] of fotosRelatorio.entries()) {
-        const urlFoto = obterUrlFoto(foto);
-        const fotoX = inicioFotosX + indiceFoto * (larguraFoto + espacoEntreFotos);
-        const fotoY = inicioFotosY;
+    doc.setFillColor(248, 250, 252);
+    doc.setDrawColor(150, 155, 165);
+    doc.roundedRect(posicaoXFoto, posicaoY + 18, larguraFoto, alturaFoto, 8, 8, "FD");
 
-        doc.setFillColor(248, 250, 252);
-        doc.setDrawColor(150, 155, 165);
-        doc.roundedRect(fotoX, fotoY, larguraFoto, alturaFoto, 8, 8, "FD");
+    const fotosRelatorio = obterFotosDaVistoriaParaRelatorio(vistoria);
+    const fotoPrincipal = fotosRelatorio[0] ? obterUrlFoto(fotosRelatorio[0]) : "";
 
-        doc.setFont("helvetica", "bold");
-        doc.setFontSize(8.5);
-        doc.setTextColor(127, 29, 29);
-        doc.text(`Foto ${indiceFoto + 1}`, fotoX + 10, fotoY + 14);
+    if (fotoPrincipal) {
+      const dataUrl = await carregarImagemComoDataUrl(fotoPrincipal);
 
-        const dataUrl = await carregarImagemComoDataUrl(urlFoto);
+      if (dataUrl) {
+        try {
+          const dimensoes = await obterDimensoesImagem(dataUrl);
+          const areaImagemLargura = larguraFoto - 12;
+          const areaImagemAltura = alturaFoto - 12;
+          const ajuste = dimensoes
+            ? calcularImagemAjustada(
+                dimensoes.largura,
+                dimensoes.altura,
+                areaImagemLargura,
+                areaImagemAltura
+              )
+            : {
+                largura: areaImagemLargura,
+                altura: areaImagemAltura,
+                xOffset: 0,
+                yOffset: 0,
+              };
 
-        if (dataUrl) {
-          try {
-            const dimensoes = await obterDimensoesImagem(dataUrl);
-            const areaImagemLargura = larguraFoto - 20;
-            const areaImagemAltura = alturaFoto - 30;
-            const ajuste = dimensoes
-              ? calcularImagemAjustada(
-                  dimensoes.largura,
-                  dimensoes.altura,
-                  areaImagemLargura,
-                  areaImagemAltura
-                )
-              : {
-                  largura: areaImagemLargura,
-                  altura: areaImagemAltura,
-                  xOffset: 0,
-                  yOffset: 0,
-                };
+          const formatoImagem = dataUrl.includes("image/png") ? "PNG" : "JPEG";
 
-            const formatoImagem = dataUrl.includes("image/png") ? "PNG" : "JPEG";
-
-            doc.addImage(
-              dataUrl,
-              formatoImagem,
-              fotoX + 10 + ajuste.xOffset,
-              fotoY + 22 + ajuste.yOffset,
-              ajuste.largura,
-              ajuste.altura
-            );
-          } catch {
-            doc.setFont("helvetica", "normal");
-            doc.setFontSize(8);
-            doc.setTextColor(100, 100, 100);
-            doc.text("Foto não pôde ser renderizada.", fotoX + 12, fotoY + 62);
-          }
-        } else {
+          doc.addImage(
+            dataUrl,
+            formatoImagem,
+            posicaoXFoto + 6 + ajuste.xOffset,
+            posicaoY + 24 + ajuste.yOffset,
+            ajuste.largura,
+            ajuste.altura
+          );
+        } catch {
           doc.setFont("helvetica", "normal");
-          doc.setFontSize(8);
+          doc.setFontSize(9);
           doc.setTextColor(100, 100, 100);
-          doc.text("Foto indisponível.", fotoX + 12, fotoY + 62);
+          doc.text("Foto não pôde ser renderizada.", posicaoXFoto + 12, posicaoY + 52);
         }
+      } else {
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(9);
+        doc.setTextColor(100, 100, 100);
+        doc.text("Foto indisponível.", posicaoXFoto + 12, posicaoY + 52);
       }
     } else {
-      doc.setFillColor(248, 250, 252);
-      doc.setDrawColor(150, 155, 165);
-      doc.roundedRect(inicioFotosX, inicioFotosY, larguraFoto, alturaFoto, 8, 8, "FD");
       doc.setFont("helvetica", "normal");
       doc.setFontSize(9);
       doc.setTextColor(100, 100, 100);
-      doc.text("Sem foto sincronizada.", inicioFotosX + 12, inicioFotosY + 62);
+      doc.text("Sem foto sincronizada.", posicaoXFoto + 12, posicaoY + 52);
     }
 
     posicaoY += alturaBlocoTopo + 12;
@@ -2747,32 +2200,6 @@ export default function Home() {
     doc.save(nomeArquivo);
   }
 
-  async function buscarRespostasDaVistoriaParaRelatorio(vistoriaId: unknown) {
-    const id = String(vistoriaId ?? "").trim();
-
-    if (!id) {
-      return obterRespostasUnicasDaVistoria(vistoriaId);
-    }
-
-    const { data, error } = await supabase
-      .from("vistoria_respostas")
-      .select("id, vistoria_id, pergunta, resposta, detalhe, ordem, created_at")
-      .eq("vistoria_id", id)
-      .order("ordem", { ascending: true });
-
-    if (error) {
-      throw new Error(`Erro ao buscar checklist da vistoria: ${error.message}`);
-    }
-
-    const respostasDoBanco = (data ?? []) as LinhaBanco[];
-
-    if (respostasDoBanco.length > 0) {
-      return respostasDoBanco;
-    }
-
-    return obterRespostasUnicasDaVistoria(vistoriaId);
-  }
-
   async function gerarPdfRelatorioIndividual(
     vistoria: LinhaBanco,
     acao: "visualizar" | "baixar"
@@ -2788,14 +2215,7 @@ export default function Home() {
       const subtitulo = `Equipamento: ${obterEquipamento(vistoria)} | Vistoria realizada por: ${obterColaboradorExibido(vistoria)}`;
 
       let posicaoY = escreverCabecalhoRelatorio(doc, titulo, subtitulo);
-      const checklistRelatorio = await buscarRespostasDaVistoriaParaRelatorio(vistoria.id);
-      posicaoY = await escreverBlocoVistoriaTexto(
-        doc,
-        vistoria,
-        posicaoY,
-        1,
-        checklistRelatorio
-      );
+      posicaoY = await escreverBlocoVistoriaTexto(doc, vistoria, posicaoY, 1);
 
       await finalizarPdfRelatorio(
         doc,
@@ -2844,15 +2264,7 @@ export default function Home() {
       let posicaoY = escreverCabecalhoRelatorio(doc, titulo, subtitulo);
 
       for (const [indice, vistoria] of itensUnicos.entries()) {
-        const checklistRelatorio = await buscarRespostasDaVistoriaParaRelatorio(vistoria.id);
-
-        posicaoY = await escreverBlocoVistoriaTexto(
-          doc,
-          vistoria,
-          posicaoY,
-          indice + 1,
-          checklistRelatorio
-        );
+        posicaoY = await escreverBlocoVistoriaTexto(doc, vistoria, posicaoY, indice + 1);
       }
 
       await finalizarPdfRelatorio(
@@ -2876,9 +2288,9 @@ export default function Home() {
     setAviso("");
 
     if (!existeFiltroRelatorioAplicado()) {
-      setAviso(
-        "Nenhum filtro selecionado. Mostrando todas as vistorias sincronizadas carregadas no painel."
-      );
+      setRelatoriosBuscados(false);
+      setAviso("Selecione pelo menos um filtro para buscar relatórios.");
+      return;
     }
 
     setRelatoriosBuscados(true);
@@ -3219,11 +2631,6 @@ export default function Home() {
       id: "empresas" as TelaAdmin,
       label: "Empresas",
       icon: Building2,
-    },
-    {
-      id: "catalogo" as TelaAdmin,
-      label: "Catálogo",
-      icon: ClipboardCheck,
     },
     {
       id: "colaboradores" as TelaAdmin,
@@ -4229,434 +3636,6 @@ export default function Home() {
     );
   }
 
-
-  function renderizarCatalogo() {
-    return (
-      <div className="space-y-4">
-        {erro && (
-          <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm font-semibold text-red-800">
-            {erro}
-          </div>
-        )}
-
-        {aviso && (
-          <div className="rounded-xl border border-green-200 bg-green-50 p-4 text-sm font-semibold text-green-800">
-            {aviso}
-          </div>
-        )}
-
-        <section className="grid gap-4 md:grid-cols-3">
-          <Card className="rounded-2xl border border-zinc-200 bg-white shadow-sm">
-            <CardContent className="p-5">
-              <p className="text-xs font-black uppercase tracking-[0.18em] text-zinc-500">
-                Total no catálogo
-              </p>
-              <p className="mt-2 text-3xl font-black text-red-950">
-                {formatarNumero(catalogo.length)}
-              </p>
-              <p className="text-xs font-semibold text-zinc-500">
-                equipamentos cadastrados
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="rounded-2xl border border-zinc-200 bg-white shadow-sm">
-            <CardContent className="p-5">
-              <p className="text-xs font-black uppercase tracking-[0.18em] text-zinc-500">
-                Ativos
-              </p>
-              <p className="mt-2 text-3xl font-black text-green-700">
-                {formatarNumero(catalogo.filter((item) => statusCatalogo(item.status) === "ATIVO").length)}
-              </p>
-              <p className="text-xs font-semibold text-zinc-500">
-                aparecerão no app
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="rounded-2xl border border-zinc-200 bg-white shadow-sm">
-            <CardContent className="p-5">
-              <p className="text-xs font-black uppercase tracking-[0.18em] text-zinc-500">
-                Inativos
-              </p>
-              <p className="mt-2 text-3xl font-black text-zinc-700">
-                {formatarNumero(catalogo.filter((item) => statusCatalogo(item.status) === "INATIVO").length)}
-              </p>
-              <p className="text-xs font-semibold text-zinc-500">
-                ocultos no app
-              </p>
-            </CardContent>
-          </Card>
-        </section>
-
-        <Card className="rounded-xl border border-zinc-200 bg-white shadow-sm">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-lg font-black text-zinc-800">
-              <Building2 className="h-5 w-5 text-red-900" />
-              {catalogoEditandoId
-                ? "Editar equipamento"
-                : catalogoModo === "INATIVAR"
-                  ? "Inativar equipamento do catálogo"
-                  : "Cadastrar equipamento no catálogo"}
-            </CardTitle>
-            <p className="text-sm text-zinc-500">
-              Escolha uma empresa já cadastrada ou crie uma nova. Depois selecione a área, o tipo e cadastre ou inative o equipamento.
-            </p>
-          </CardHeader>
-
-          <CardContent className="space-y-4">
-            <div className="flex flex-wrap gap-2 rounded-2xl bg-red-50 p-2">
-              <button
-                type="button"
-                onClick={() => alterarModoCatalogo("CADASTRAR")}
-                className={`rounded-xl px-4 py-2 text-sm font-black transition ${
-                  catalogoModo === "CADASTRAR"
-                    ? "bg-red-900 text-white"
-                    : "bg-white text-red-900 hover:bg-red-100"
-                }`}
-              >
-                Cadastrar novo
-              </button>
-
-              <button
-                type="button"
-                onClick={() => alterarModoCatalogo("INATIVAR")}
-                className={`rounded-xl px-4 py-2 text-sm font-black transition ${
-                  catalogoModo === "INATIVAR"
-                    ? "bg-red-900 text-white"
-                    : "bg-white text-red-900 hover:bg-red-100"
-                }`}
-              >
-                Inativar existente
-              </button>
-            </div>
-
-            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-              <div>
-                <label className="text-sm font-bold text-red-950">Empresa</label>
-                <select
-                  value={catalogoEmpresaModo === "NOVO" ? OPCAO_NOVO_CATALOGO : catalogoEmpresa}
-                  onChange={(event) => selecionarEmpresaCatalogo(event.target.value)}
-                  className="mt-2 h-11 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm"
-                >
-                  <option value="">Selecione a empresa</option>
-                  {catalogoModo === "CADASTRAR" ? (
-                    <option value={OPCAO_NOVO_CATALOGO}>+ Nova empresa</option>
-                  ) : null}
-                  {empresasCatalogoDisponiveis.map((empresa) => (
-                    <option key={empresa} value={empresa}>
-                      {empresa}
-                    </option>
-                  ))}
-                </select>
-
-                {catalogoEmpresaModo === "NOVO" ? (
-                  <Input
-                    value={catalogoEmpresa}
-                    onChange={(event) => setCatalogoEmpresa(event.target.value)}
-                    placeholder="Nome da nova empresa"
-                    className="mt-2 h-11 rounded-xl"
-                  />
-                ) : null}
-              </div>
-
-              <div>
-                <label className="text-sm font-bold text-red-950">Área</label>
-                {catalogoEmpresaModo === "NOVO" ? (
-                  <Input
-                    value={catalogoArea}
-                    onChange={(event) => setCatalogoArea(event.target.value)}
-                    placeholder="Nome da nova área"
-                    className="mt-2 h-11 rounded-xl"
-                  />
-                ) : (
-                  <>
-                    <select
-                      value={catalogoAreaModo === "NOVO" ? OPCAO_NOVO_CATALOGO : catalogoArea}
-                      onChange={(event) => selecionarAreaCatalogo(event.target.value)}
-                      disabled={!catalogoEmpresa}
-                      className="mt-2 h-11 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm disabled:bg-zinc-100 disabled:text-zinc-400"
-                    >
-                      <option value="">Selecione a área</option>
-                      {catalogoModo === "CADASTRAR" ? (
-                        <option value={OPCAO_NOVO_CATALOGO}>+ Nova área</option>
-                      ) : null}
-                      {areasCatalogoDisponiveis.map((area) => (
-                        <option key={area} value={area}>
-                          {area}
-                        </option>
-                      ))}
-                    </select>
-
-                    {catalogoAreaModo === "NOVO" ? (
-                      <Input
-                        value={catalogoArea}
-                        onChange={(event) => setCatalogoArea(event.target.value)}
-                        placeholder="Nome da nova área"
-                        className="mt-2 h-11 rounded-xl"
-                      />
-                    ) : null}
-                  </>
-                )}
-              </div>
-
-              <div>
-                <label className="text-sm font-bold text-red-950">Tipo</label>
-                <select
-                  value={catalogoTipo}
-                  onChange={(event) => {
-                    setCatalogoTipo(event.target.value);
-                    setCatalogoEquipamentoInativarId("");
-                  }}
-                  className="mt-2 h-11 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm"
-                >
-                  {TIPOS_CATALOGO.map((tipo) => (
-                    <option key={tipo.valor} value={tipo.valor}>
-                      {tipo.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="text-sm font-bold text-red-950">Status</label>
-                <div className="mt-2 flex h-11 items-center rounded-xl border border-zinc-200 bg-zinc-50 px-3 text-sm font-black text-zinc-700">
-                  {catalogoModo === "INATIVAR" ? "INATIVO" : "ATIVO"}
-                </div>
-                <p className="mt-1 text-xs font-medium text-zinc-500">
-                  {catalogoModo === "INATIVAR"
-                    ? "O equipamento selecionado será ocultado no app."
-                    : "Novos equipamentos entram ativos automaticamente."}
-                </p>
-              </div>
-            </div>
-
-            {catalogoModo === "INATIVAR" ? (
-              <div>
-                <label className="text-sm font-bold text-red-950">Equipamento ativo para inativar</label>
-                <select
-                  value={catalogoEquipamentoInativarId}
-                  onChange={(event) => setCatalogoEquipamentoInativarId(event.target.value)}
-                  disabled={!catalogoEmpresa || !catalogoArea || equipamentosAtivosCatalogoDisponiveis.length === 0}
-                  className="mt-2 h-11 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm disabled:bg-zinc-100 disabled:text-zinc-400"
-                >
-                  <option value="">
-                    {equipamentosAtivosCatalogoDisponiveis.length === 0
-                      ? "Nenhum equipamento ativo para este caminho"
-                      : "Selecione o equipamento ativo"}
-                  </option>
-                  {equipamentosAtivosCatalogoDisponiveis.map((item) => (
-                    <option key={String(item.id)} value={String(item.id)}>
-                      {String(item.equipamento_nome ?? "Equipamento sem nome")}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            ) : (
-              <div>
-                <label className="text-sm font-bold text-red-950">Equipamento</label>
-                <Input
-                  value={catalogoEquipamento}
-                  onChange={(event) => setCatalogoEquipamento(event.target.value)}
-                  placeholder="Ex: 15-POSTO D. LUBRIFICANTES BC 50KG"
-                  className="mt-2 h-11 rounded-xl"
-                />
-                <p className="mt-1 text-xs font-medium text-zinc-500">
-                  A sequência é definida automaticamente conforme empresa, área e tipo.
-                </p>
-              </div>
-            )}
-
-            <div className="flex flex-wrap gap-2">
-              <Button
-                onClick={salvarItemCatalogo}
-                disabled={
-                  salvandoCatalogo ||
-                  Boolean(atualizandoCatalogoId) ||
-                  (catalogoModo === "INATIVAR" && !catalogoEquipamentoInativarId)
-                }
-                className="h-11 rounded-xl bg-red-900 px-6 font-black text-white hover:bg-red-950"
-              >
-                {salvandoCatalogo || atualizandoCatalogoId ? (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                ) : null}
-                {catalogoEditandoId
-                  ? "Salvar alterações"
-                  : catalogoModo === "INATIVAR"
-                    ? "Inativar equipamento"
-                    : "Cadastrar equipamento"}
-              </Button>
-
-              <Button
-                variant="outline"
-                onClick={limparFormularioCatalogo}
-                className="h-11 rounded-xl border-red-200 font-bold text-red-900"
-              >
-                Limpar
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="rounded-xl border border-zinc-200 bg-white shadow-sm">
-          <CardHeader>
-            <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-              <div>
-                <CardTitle className="text-lg font-black text-zinc-800">
-                  Catálogo cadastrado
-                </CardTitle>
-                <p className="text-sm text-zinc-500">
-                  Lista carregada da tabela public.catalogo_equipamentos.
-                </p>
-              </div>
-
-              <div className="flex flex-col gap-2 sm:flex-row">
-                <div className="relative">
-                  <Search className="absolute left-3 top-3 h-4 w-4 text-zinc-400" />
-                  <Input
-                    value={buscaCatalogo}
-                    onChange={(event) => setBuscaCatalogo(event.target.value)}
-                    placeholder="Buscar empresa, área, tipo ou equipamento"
-                    className="h-11 rounded-xl pl-9 sm:w-96"
-                  />
-                </div>
-
-                <select
-                  value={filtroStatusCatalogo}
-                  onChange={(event) => setFiltroStatusCatalogo(event.target.value)}
-                  className="h-11 rounded-xl border border-zinc-200 bg-white px-3 text-sm"
-                >
-                  <option value="TODOS">Todos</option>
-                  <option value="ATIVO">Ativos</option>
-                  <option value="INATIVO">Inativos</option>
-                </select>
-
-                <Button
-                  variant="outline"
-                  onClick={carregarCatalogo}
-                  disabled={carregandoCatalogo}
-                  className="h-11 rounded-xl border-red-200 font-bold text-red-900"
-                >
-                  {carregandoCatalogo ? (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  ) : null}
-                  Atualizar
-                </Button>
-              </div>
-            </div>
-          </CardHeader>
-
-          <CardContent>
-            {carregandoCatalogo ? (
-              <div className="flex items-center gap-3 rounded-xl bg-zinc-50 p-5 text-sm font-bold text-zinc-600">
-                <Loader2 className="h-4 w-4 animate-spin text-red-900" />
-                Carregando catálogo...
-              </div>
-            ) : catalogoFiltrado.length === 0 ? (
-              <div className="rounded-xl bg-zinc-50 p-5 text-sm font-semibold text-zinc-500">
-                Nenhum equipamento encontrado no catálogo.
-              </div>
-            ) : (
-              <div className="grid gap-3">
-                {catalogoFiltrado.map((item, index) => {
-                  const id = String(item.id ?? index);
-                  const status = statusCatalogo(item.status);
-
-                  return (
-                    <div
-                      key={id}
-                      className="grid gap-3 rounded-xl border border-zinc-200 bg-zinc-50 p-4 xl:grid-cols-[1.05fr_0.9fr_0.75fr_1.5fr_0.55fr_1.3fr]"
-                    >
-                      <div>
-                        <p className="text-xs font-bold uppercase tracking-[0.18em] text-zinc-500">Empresa</p>
-                        <p className="mt-1 font-black text-red-950">{String(item.empresa_nome ?? "-")}</p>
-                      </div>
-
-                      <div>
-                        <p className="text-xs font-bold uppercase tracking-[0.18em] text-zinc-500">Área</p>
-                        <p className="mt-1 font-semibold text-zinc-800">{String(item.area_nome ?? "-")}</p>
-                      </div>
-
-                      <div>
-                        <p className="text-xs font-bold uppercase tracking-[0.18em] text-zinc-500">Tipo</p>
-                        <p className="mt-1 font-semibold text-zinc-800">{String(item.tipo ?? "-")}</p>
-                      </div>
-
-                      <div>
-                        <p className="text-xs font-bold uppercase tracking-[0.18em] text-zinc-500">Equipamento</p>
-                        <p className="mt-1 font-black text-zinc-900">{String(item.equipamento_nome ?? "-")}</p>
-                      </div>
-
-                      <div>
-                        <p className="text-xs font-bold uppercase tracking-[0.18em] text-zinc-500">Status</p>
-                        <Badge className={`mt-1 ${classeBadgeCatalogo(status)}`}>{status}</Badge>
-                      </div>
-
-                      <div>
-                        <p className="text-xs font-bold uppercase tracking-[0.18em] text-zinc-500">Ações</p>
-                        <div className="mt-1 flex flex-wrap gap-2">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            disabled={Boolean(atualizandoCatalogoId)}
-                            onClick={() => editarItemCatalogo(item)}
-                            className="rounded-xl border-red-200 text-red-900 hover:bg-red-50"
-                          >
-                            Editar
-                          </Button>
-
-                          {status === "ATIVO" ? (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              disabled={Boolean(atualizandoCatalogoId)}
-                              onClick={() => atualizarStatusCatalogo(item, "INATIVAR")}
-                              className="rounded-xl border-yellow-200 text-yellow-800 hover:bg-yellow-50"
-                            >
-                              {atualizandoCatalogoId === `${id}-INATIVAR` ? (
-                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                              ) : null}
-                              Inativar
-                            </Button>
-                          ) : (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              disabled={Boolean(atualizandoCatalogoId)}
-                              onClick={() => atualizarStatusCatalogo(item, "REATIVAR")}
-                              className="rounded-xl border-green-200 text-green-800 hover:bg-green-50"
-                            >
-                              {atualizandoCatalogoId === `${id}-REATIVAR` ? (
-                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                              ) : null}
-                              Reativar
-                            </Button>
-                          )}
-
-                          <Button
-                            size="sm"
-                            disabled={Boolean(atualizandoCatalogoId)}
-                            onClick={() => atualizarStatusCatalogo(item, "EXCLUIR")}
-                            className="rounded-xl bg-red-900 text-white hover:bg-red-950"
-                          >
-                            {atualizandoCatalogoId === `${id}-EXCLUIR` ? (
-                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            ) : null}
-                            Excluir
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
   function renderizarColaboradores() {
     return (
       <div className="space-y-4">
@@ -5611,7 +4590,6 @@ export default function Home() {
     if (telaAtiva === "dashboard") return renderizarDashboard();
     if (telaAtiva === "vistorias") return renderizarVistorias();
     if (telaAtiva === "empresas") return renderizarEmpresas();
-    if (telaAtiva === "catalogo") return renderizarCatalogo();
     if (telaAtiva === "colaboradores") return renderizarColaboradores();
     if (telaAtiva === "dispositivos") return renderizarDispositivos();
     if (telaAtiva === "relatorios") return renderizarRelatorios();

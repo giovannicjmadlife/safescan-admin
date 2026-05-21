@@ -116,89 +116,24 @@ function pegarCampo(linha: LinhaBanco, campos: string[]) {
   return "";
 }
 
-function converterValorEmData(valor: unknown) {
-  if (!valor) return null;
-
-  if (valor instanceof Date && !Number.isNaN(valor.getTime())) {
-    return valor;
-  }
-
-  const texto = String(valor).trim();
-
-  if (!texto || texto.toLowerCase() === "null" || texto.toLowerCase() === "undefined") {
-    return null;
-  }
-
-  const dataDireta = new Date(texto);
-
-  if (!Number.isNaN(dataDireta.getTime())) {
-    return dataDireta;
-  }
-
-  const formatoBrasileiro = texto.match(
-    /^(\d{2})\/(\d{2})\/(\d{4})(?:[ T](\d{2}):(\d{2})(?::(\d{2}))?)?/
-  );
-
-  if (formatoBrasileiro) {
-    const [, dia, mes, ano, hora = "0", minuto = "0", segundo = "0"] = formatoBrasileiro;
-    const data = new Date(
-      Number(ano),
-      Number(mes) - 1,
-      Number(dia),
-      Number(hora),
-      Number(minuto),
-      Number(segundo)
-    );
-
-    if (!Number.isNaN(data.getTime())) {
-      return data;
-    }
-  }
-
-  const formatoIsoSemTimezone = texto.match(
-    /^(\d{4})-(\d{2})-(\d{2})(?:[ T](\d{2}):(\d{2})(?::(\d{2}))?)?/
-  );
-
-  if (formatoIsoSemTimezone) {
-    const [, ano, mes, dia, hora = "0", minuto = "0", segundo = "0"] = formatoIsoSemTimezone;
-    const data = new Date(
-      Number(ano),
-      Number(mes) - 1,
-      Number(dia),
-      Number(hora),
-      Number(minuto),
-      Number(segundo)
-    );
-
-    if (!Number.isNaN(data.getTime())) {
-      return data;
-    }
-  }
-
-  return null;
-}
-
 function pegarData(linha: LinhaBanco) {
   const candidatos = [
-    "data_vistoria",
-    "dataVistoria",
-    "data_vistoria_iso",
-    "data",
-    "data_local",
-    "dataLocal",
-    "criadoEmIso",
-    "criado_em_iso",
-    "criado_em",
     "created_at",
+    "criado_em",
+    "data",
+    "data_vistoria",
     "sincronizado_em",
     "updated_at",
-    "atualizadoEmIso",
   ];
 
   for (const campo of candidatos) {
-    const data = converterValorEmData(linha[campo]);
+    const valor = linha[campo];
 
-    if (data) {
+    if (!valor) continue;
+
+    const data = new Date(String(valor));
+
+    if (!Number.isNaN(data.getTime())) {
       return data;
     }
   }
@@ -222,37 +157,6 @@ function formatarData(data: Date | null) {
     dateStyle: "short",
     timeStyle: "short",
   }).format(data);
-}
-
-function chaveDataLocal(data: Date | null) {
-  if (!data) return "";
-
-  const ano = data.getFullYear();
-  const mes = String(data.getMonth() + 1).padStart(2, "0");
-  const dia = String(data.getDate()).padStart(2, "0");
-
-  return `${ano}-${mes}-${dia}`;
-}
-
-function dataDentroDoPeriodo(
-  data: Date | null,
-  dataInicio: string,
-  dataFim: string
-) {
-  if (!dataInicio && !dataFim) return true;
-  if (!data) return false;
-
-  const dataRegistro = chaveDataLocal(data);
-
-  if (dataInicio && dataRegistro < dataInicio) {
-    return false;
-  }
-
-  if (dataFim && dataRegistro > dataFim) {
-    return false;
-  }
-
-  return true;
 }
 
 function tituloDaTela(tela: TelaAdmin) {
@@ -560,9 +464,6 @@ function obterUrlFoto(foto: LinhaBanco) {
     pegarCampo(foto, [
       "url",
       "foto_url",
-      "fotoUrl",
-      "foto_url_1",
-      "fotoUrl1",
       "public_url",
       "arquivo_url",
       "storage_url",
@@ -588,84 +489,6 @@ function obterUrlFoto(foto: LinhaBanco) {
   const { data } = supabase.storage.from(BUCKET_FOTOS).getPublicUrl(caminhoLimpo);
 
   return data.publicUrl || valor;
-}
-
-function normalizarUrlFoto(valor: unknown) {
-  const texto = String(valor ?? "").trim();
-
-  if (!texto) return "";
-
-  if (
-    texto.startsWith("http") ||
-    texto.startsWith("data:") ||
-    texto.startsWith("blob:")
-  ) {
-    return texto;
-  }
-
-  const caminhoLimpo = texto
-    .replace(/^\/+/, "")
-    .replace(`${BUCKET_FOTOS}/`, "");
-
-  const { data } = supabase.storage.from(BUCKET_FOTOS).getPublicUrl(caminhoLimpo);
-
-  return data.publicUrl || texto;
-}
-
-function adicionarFotoUnica(lista: LinhaBanco[], foto: LinhaBanco) {
-  const url = obterUrlFoto(foto);
-  if (!url) return;
-
-  const jaExiste = lista.some((item) => obterUrlFoto(item) === url);
-  if (jaExiste) return;
-
-  lista.push(foto);
-}
-
-function obterFotosComFallback(vistoria: LinhaBanco, todasFotos: LinhaBanco[]) {
-  const fotosEncontradas: LinhaBanco[] = [];
-
-  const fotosTabela = todasFotos
-    .filter((foto) => String(foto.vistoria_id) === String(vistoria.id))
-    .sort((a, b) => {
-      const ordemA = Number(a.ordem ?? a.posicao ?? 999);
-      const ordemB = Number(b.ordem ?? b.posicao ?? 999);
-      return ordemA - ordemB;
-    });
-
-  for (const foto of fotosTabela) {
-    adicionarFotoUnica(fotosEncontradas, foto);
-  }
-
-  const camposDaVistoria = [
-    { campo: "foto_url", origem: "vistorias.foto_url", ordem: 1 },
-    { campo: "fotoUrl", origem: "vistorias.fotoUrl", ordem: 1 },
-    { campo: "foto_url_1", origem: "vistorias.foto_url_1", ordem: 1 },
-    { campo: "fotoUrl1", origem: "vistorias.fotoUrl1", ordem: 1 },
-    { campo: "foto_url2", origem: "vistorias.foto_url2", ordem: 2 },
-    { campo: "fotoUrl2", origem: "vistorias.fotoUrl2", ordem: 2 },
-    { campo: "foto_url_2", origem: "vistorias.foto_url_2", ordem: 2 },
-    { campo: "segunda_foto_url", origem: "vistorias.segunda_foto_url", ordem: 2 },
-  ];
-
-  for (const item of camposDaVistoria) {
-    const url = normalizarUrlFoto(vistoria[item.campo]);
-    if (!url) continue;
-
-    adicionarFotoUnica(fotosEncontradas, {
-      id: `${String(vistoria.id)}-${item.campo}`,
-      vistoria_id: vistoria.id,
-      foto_url: url,
-      origem: item.origem,
-      ordem: item.ordem,
-    });
-  }
-
-  return fotosEncontradas.sort((a, b) => {
-    const ordemA = Number(a.ordem ?? a.posicao ?? 999);
-    const ordemB = Number(b.ordem ?? b.posicao ?? 999);
-    return ordemA - ordemB;
-  });
 }
 
 function obterRespostaExibida(resposta: LinhaBanco) {
@@ -805,8 +628,7 @@ export default function Home() {
     const { data: vistoriasData, error: erroVistorias } = await supabase
       .from("vistorias")
       .select("*")
-      .order("created_at", { ascending: false })
-      .limit(10000);
+      .limit(3000);
 
     if (erroVistorias) {
       setErro(`Erro ao buscar vistorias: ${erroVistorias.message}`);
@@ -1866,8 +1688,20 @@ export default function Home() {
 
         const data = pegarData(vistoria);
 
-        if (!dataDentroDoPeriodo(data, filtroDataInicio, filtroDataFim)) {
-          return false;
+        if (filtroDataInicio) {
+          const inicio = new Date(`${filtroDataInicio}T00:00:00`);
+
+          if (!data || data < inicio) {
+            return false;
+          }
+        }
+
+        if (filtroDataFim) {
+          const fim = new Date(`${filtroDataFim}T23:59:59`);
+
+          if (!data || data > fim) {
+            return false;
+          }
         }
 
         return true;
@@ -1915,7 +1749,33 @@ export default function Home() {
   const fotosDaVistoria = useMemo(() => {
     if (!vistoriaSelecionada) return [];
 
-    return obterFotosComFallback(vistoriaSelecionada, fotos);
+    const fotosTabela = fotos.filter(
+      (foto) => String(foto.vistoria_id) === String(vistoriaSelecionada.id)
+    );
+
+    const urlFotoPrincipal = obterUrlFoto(vistoriaSelecionada);
+
+    if (!urlFotoPrincipal) {
+      return fotosTabela;
+    }
+
+    const fotoJaExiste = fotosTabela.some(
+      (foto) => obterUrlFoto(foto) === urlFotoPrincipal
+    );
+
+    if (fotoJaExiste) {
+      return fotosTabela;
+    }
+
+    return [
+      {
+        id: `${String(vistoriaSelecionada.id)}-foto-principal`,
+        vistoria_id: vistoriaSelecionada.id,
+        foto_url: urlFotoPrincipal,
+        origem: "vistorias.foto_url",
+      },
+      ...fotosTabela,
+    ];
   }, [fotos, vistoriaSelecionada]);
 
   function totalNaoConformidadesDaVistoria(vistoriaId: unknown) {
@@ -2177,8 +2037,20 @@ export default function Home() {
 
       const data = pegarData(vistoria);
 
-      if (!dataDentroDoPeriodo(data, mapaDataInicio, mapaDataFim)) {
-        return false;
+      if (mapaDataInicio) {
+        const inicio = new Date(`${mapaDataInicio}T00:00:00`);
+
+        if (!data || data < inicio) {
+          return false;
+        }
+      }
+
+      if (mapaDataFim) {
+        const fim = new Date(`${mapaDataFim}T23:59:59`);
+
+        if (!data || data > fim) {
+          return false;
+        }
       }
 
       if (busca) {
@@ -2299,8 +2171,20 @@ export default function Home() {
 
         const data = pegarData(vistoria);
 
-        if (!dataDentroDoPeriodo(data, relDataInicio, relDataFim)) {
-          return false;
+        if (relDataInicio) {
+          const inicio = new Date(`${relDataInicio}T00:00:00`);
+
+          if (!data || data < inicio) {
+            return false;
+          }
+        }
+
+        if (relDataFim) {
+          const fim = new Date(`${relDataFim}T23:59:59`);
+
+          if (!data || data > fim) {
+            return false;
+          }
         }
 
         return true;
@@ -2361,7 +2245,33 @@ export default function Home() {
   }
 
   function obterFotosDaVistoriaParaRelatorio(vistoria: LinhaBanco) {
-    return obterFotosComFallback(vistoria, fotos);
+    const fotosTabela = fotos.filter(
+      (foto) => String(foto.vistoria_id) === String(vistoria.id)
+    );
+
+    const urlFotoPrincipal = obterUrlFoto(vistoria);
+
+    if (!urlFotoPrincipal) {
+      return fotosTabela;
+    }
+
+    const fotoJaExiste = fotosTabela.some(
+      (foto) => obterUrlFoto(foto) === urlFotoPrincipal
+    );
+
+    if (fotoJaExiste) {
+      return fotosTabela;
+    }
+
+    return [
+      {
+        id: `${String(vistoria.id)}-foto-principal`,
+        vistoria_id: vistoria.id,
+        foto_url: urlFotoPrincipal,
+        origem: "vistorias.foto_url",
+      },
+      ...fotosTabela,
+    ];
   }
 
   function chaveUnicaRelatorio(vistoria: LinhaBanco) {
@@ -2528,29 +2438,18 @@ export default function Home() {
     doc: any,
     vistoria: LinhaBanco,
     posicaoY: number,
-    indice?: number,
-    respostasExternas?: LinhaBanco[]
+    indice?: number
   ) {
     const margemX = 40;
     const larguraTotal = 515;
-    const checklist = respostasExternas ?? obterRespostasUnicasDaVistoria(vistoria.id);
-    const fotosRelatorio = obterFotosDaVistoriaParaRelatorio(vistoria).slice(0, 2);
-    const quantidadeFotos = fotosRelatorio.length;
+    const larguraFoto = 205;
+    const alturaFoto = 150;
+    const espacoEntreColunas = 18;
+    const posicaoXFoto = margemX + larguraTotal - larguraFoto - 12;
+    const larguraInfo = larguraTotal - larguraFoto - espacoEntreColunas - 18;
+    const checklist = obterRespostasUnicasDaVistoria(vistoria.id);
 
-    // Layout novo: identificação no topo e as fotos grandes lado a lado no espaço abaixo.
-    // Isso evita foto pequena empilhada e aproveita melhor a largura da página.
-    const alturaBlocoTopo = quantidadeFotos > 1 ? 362 : 330;
-    const alturaFoto = quantidadeFotos > 1 ? 176 : 190;
-    const espacoEntreFotos = 14;
-    const larguraFoto = quantidadeFotos > 1
-      ? (larguraTotal - 36 - espacoEntreFotos) / 2
-      : 300;
-    const inicioFotosY = posicaoY + 144;
-    const inicioFotosX = quantidadeFotos > 1
-      ? margemX + 18
-      : margemX + (larguraTotal - larguraFoto) / 2;
-
-    posicaoY = garantirEspacoNoPdf(doc, posicaoY, alturaBlocoTopo + 32);
+    posicaoY = garantirEspacoNoPdf(doc, posicaoY, 228);
 
     const linhasInfo = [
       `Equipamento: ${obterEquipamento(vistoria)}`,
@@ -2562,12 +2461,14 @@ export default function Home() {
       `GPS: ${String(vistoria.gps ?? "Não informado")}`,
     ];
 
+    const alturaBlocoTopo = 196;
+
     doc.setFillColor(255, 255, 255);
     doc.setDrawColor(196, 201, 209);
     doc.roundedRect(margemX, posicaoY - 14, larguraTotal, alturaBlocoTopo, 10, 10, "FD");
 
     doc.setFillColor(254, 242, 242);
-    doc.roundedRect(margemX + 8, posicaoY - 6, larguraTotal - 16, 28, 8, 8, "F");
+    doc.roundedRect(margemX + 8, posicaoY - 6, larguraInfo + 8, 28, 8, 8, "F");
 
     doc.setFont("helvetica", "bold");
     doc.setFontSize(10);
@@ -2579,7 +2480,6 @@ export default function Home() {
     );
 
     let cursorInfoY = posicaoY + 42;
-    const larguraInfo = larguraTotal - 36;
 
     for (const linha of linhasInfo) {
       const [rotulo, ...restante] = linha.split(":");
@@ -2592,82 +2492,71 @@ export default function Home() {
         doc.setFontSize(8.8);
         doc.setTextColor(39, 39, 42);
         doc.text(parte, margemX + 18, cursorInfoY);
-        cursorInfoY += 12;
+        cursorInfoY += 13;
       }
     }
 
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(10);
-    doc.setTextColor(127, 29, 29);
-    doc.text(quantidadeFotos > 1 ? "Fotos da vistoria" : "Foto da vistoria", margemX + 18, inicioFotosY - 12);
+    doc.setFontSize(9);
+    doc.setTextColor(39, 39, 42);
+    doc.text("Foto da vistoria", posicaoXFoto, posicaoY + 8);
 
-    if (quantidadeFotos > 0) {
-      for (const [indiceFoto, foto] of fotosRelatorio.entries()) {
-        const urlFoto = obterUrlFoto(foto);
-        const fotoX = inicioFotosX + indiceFoto * (larguraFoto + espacoEntreFotos);
-        const fotoY = inicioFotosY;
+    doc.setFillColor(248, 250, 252);
+    doc.setDrawColor(150, 155, 165);
+    doc.roundedRect(posicaoXFoto, posicaoY + 18, larguraFoto, alturaFoto, 8, 8, "FD");
 
-        doc.setFillColor(248, 250, 252);
-        doc.setDrawColor(150, 155, 165);
-        doc.roundedRect(fotoX, fotoY, larguraFoto, alturaFoto, 8, 8, "FD");
+    const fotosRelatorio = obterFotosDaVistoriaParaRelatorio(vistoria);
+    const fotoPrincipal = fotosRelatorio[0] ? obterUrlFoto(fotosRelatorio[0]) : "";
 
-        doc.setFont("helvetica", "bold");
-        doc.setFontSize(8.5);
-        doc.setTextColor(127, 29, 29);
-        doc.text(`Foto ${indiceFoto + 1}`, fotoX + 10, fotoY + 14);
+    if (fotoPrincipal) {
+      const dataUrl = await carregarImagemComoDataUrl(fotoPrincipal);
 
-        const dataUrl = await carregarImagemComoDataUrl(urlFoto);
+      if (dataUrl) {
+        try {
+          const dimensoes = await obterDimensoesImagem(dataUrl);
+          const areaImagemLargura = larguraFoto - 12;
+          const areaImagemAltura = alturaFoto - 12;
+          const ajuste = dimensoes
+            ? calcularImagemAjustada(
+                dimensoes.largura,
+                dimensoes.altura,
+                areaImagemLargura,
+                areaImagemAltura
+              )
+            : {
+                largura: areaImagemLargura,
+                altura: areaImagemAltura,
+                xOffset: 0,
+                yOffset: 0,
+              };
 
-        if (dataUrl) {
-          try {
-            const dimensoes = await obterDimensoesImagem(dataUrl);
-            const areaImagemLargura = larguraFoto - 20;
-            const areaImagemAltura = alturaFoto - 30;
-            const ajuste = dimensoes
-              ? calcularImagemAjustada(
-                  dimensoes.largura,
-                  dimensoes.altura,
-                  areaImagemLargura,
-                  areaImagemAltura
-                )
-              : {
-                  largura: areaImagemLargura,
-                  altura: areaImagemAltura,
-                  xOffset: 0,
-                  yOffset: 0,
-                };
+          const formatoImagem = dataUrl.includes("image/png") ? "PNG" : "JPEG";
 
-            const formatoImagem = dataUrl.includes("image/png") ? "PNG" : "JPEG";
-
-            doc.addImage(
-              dataUrl,
-              formatoImagem,
-              fotoX + 10 + ajuste.xOffset,
-              fotoY + 22 + ajuste.yOffset,
-              ajuste.largura,
-              ajuste.altura
-            );
-          } catch {
-            doc.setFont("helvetica", "normal");
-            doc.setFontSize(8);
-            doc.setTextColor(100, 100, 100);
-            doc.text("Foto não pôde ser renderizada.", fotoX + 12, fotoY + 62);
-          }
-        } else {
+          doc.addImage(
+            dataUrl,
+            formatoImagem,
+            posicaoXFoto + 6 + ajuste.xOffset,
+            posicaoY + 24 + ajuste.yOffset,
+            ajuste.largura,
+            ajuste.altura
+          );
+        } catch {
           doc.setFont("helvetica", "normal");
-          doc.setFontSize(8);
+          doc.setFontSize(9);
           doc.setTextColor(100, 100, 100);
-          doc.text("Foto indisponível.", fotoX + 12, fotoY + 62);
+          doc.text("Foto não pôde ser renderizada.", posicaoXFoto + 12, posicaoY + 52);
         }
+      } else {
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(9);
+        doc.setTextColor(100, 100, 100);
+        doc.text("Foto indisponível.", posicaoXFoto + 12, posicaoY + 52);
       }
     } else {
-      doc.setFillColor(248, 250, 252);
-      doc.setDrawColor(150, 155, 165);
-      doc.roundedRect(inicioFotosX, inicioFotosY, larguraFoto, alturaFoto, 8, 8, "FD");
       doc.setFont("helvetica", "normal");
       doc.setFontSize(9);
       doc.setTextColor(100, 100, 100);
-      doc.text("Sem foto sincronizada.", inicioFotosX + 12, inicioFotosY + 62);
+      doc.text("Sem foto sincronizada.", posicaoXFoto + 12, posicaoY + 52);
     }
 
     posicaoY += alturaBlocoTopo + 12;
@@ -2747,32 +2636,6 @@ export default function Home() {
     doc.save(nomeArquivo);
   }
 
-  async function buscarRespostasDaVistoriaParaRelatorio(vistoriaId: unknown) {
-    const id = String(vistoriaId ?? "").trim();
-
-    if (!id) {
-      return obterRespostasUnicasDaVistoria(vistoriaId);
-    }
-
-    const { data, error } = await supabase
-      .from("vistoria_respostas")
-      .select("id, vistoria_id, pergunta, resposta, detalhe, ordem, created_at")
-      .eq("vistoria_id", id)
-      .order("ordem", { ascending: true });
-
-    if (error) {
-      throw new Error(`Erro ao buscar checklist da vistoria: ${error.message}`);
-    }
-
-    const respostasDoBanco = (data ?? []) as LinhaBanco[];
-
-    if (respostasDoBanco.length > 0) {
-      return respostasDoBanco;
-    }
-
-    return obterRespostasUnicasDaVistoria(vistoriaId);
-  }
-
   async function gerarPdfRelatorioIndividual(
     vistoria: LinhaBanco,
     acao: "visualizar" | "baixar"
@@ -2788,14 +2651,7 @@ export default function Home() {
       const subtitulo = `Equipamento: ${obterEquipamento(vistoria)} | Vistoria realizada por: ${obterColaboradorExibido(vistoria)}`;
 
       let posicaoY = escreverCabecalhoRelatorio(doc, titulo, subtitulo);
-      const checklistRelatorio = await buscarRespostasDaVistoriaParaRelatorio(vistoria.id);
-      posicaoY = await escreverBlocoVistoriaTexto(
-        doc,
-        vistoria,
-        posicaoY,
-        1,
-        checklistRelatorio
-      );
+      posicaoY = await escreverBlocoVistoriaTexto(doc, vistoria, posicaoY, 1);
 
       await finalizarPdfRelatorio(
         doc,
@@ -2844,15 +2700,7 @@ export default function Home() {
       let posicaoY = escreverCabecalhoRelatorio(doc, titulo, subtitulo);
 
       for (const [indice, vistoria] of itensUnicos.entries()) {
-        const checklistRelatorio = await buscarRespostasDaVistoriaParaRelatorio(vistoria.id);
-
-        posicaoY = await escreverBlocoVistoriaTexto(
-          doc,
-          vistoria,
-          posicaoY,
-          indice + 1,
-          checklistRelatorio
-        );
+        posicaoY = await escreverBlocoVistoriaTexto(doc, vistoria, posicaoY, indice + 1);
       }
 
       await finalizarPdfRelatorio(
@@ -2876,9 +2724,9 @@ export default function Home() {
     setAviso("");
 
     if (!existeFiltroRelatorioAplicado()) {
-      setAviso(
-        "Nenhum filtro selecionado. Mostrando todas as vistorias sincronizadas carregadas no painel."
-      );
+      setRelatoriosBuscados(false);
+      setAviso("Selecione pelo menos um filtro para buscar relatórios.");
+      return;
     }
 
     setRelatoriosBuscados(true);
