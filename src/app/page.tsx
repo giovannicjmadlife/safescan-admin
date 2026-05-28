@@ -5407,12 +5407,17 @@ export default function Home() {
     const larguraFoto = quantidadeFotos > 1
       ? (larguraTotal - 36 - espacoEntreFotos) / 2
       : 300;
+
+    // CORREÇÃO SAFESCAN:
+    // Primeiro garante espaço/pula página.
+    // Só depois calcula a posição das fotos.
+    // Isso evita que as fotos das páginas seguintes sejam desenhadas usando o Y antigo.
+    posicaoY = garantirEspacoNoPdf(doc, posicaoY, alturaBlocoTopo + 32);
+
     const inicioFotosY = posicaoY + 116;
     const inicioFotosX = quantidadeFotos > 1
       ? margemX + 18
       : margemX + (larguraTotal - larguraFoto) / 2;
-
-    posicaoY = garantirEspacoNoPdf(doc, posicaoY, alturaBlocoTopo + 32);
 
     const linhasInfo = [
       `Equipamento: ${obterEquipamento(vistoria)}`,
