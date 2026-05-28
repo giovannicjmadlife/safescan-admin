@@ -4788,6 +4788,97 @@ export default function Home() {
     return `${pergunta}: ${respostaExibida}`;
   }
 
+  function textoObservacaoValido(valor: unknown) {
+    const texto = String(valor ?? "").trim();
+    const normalizado = normalizarTexto(texto);
+
+    if (!texto) return "";
+
+    const valoresIgnorados = [
+      "-",
+      "--",
+      "N/A",
+      "NA",
+      "NAO",
+      "NÃO",
+      "SIM",
+      "NULL",
+      "UNDEFINED",
+      "SEM OBS",
+      "SEM OBSERVACAO",
+      "SEM OBSERVACOES",
+      "SEM OBSERVAÇÃO",
+      "SEM OBSERVAÇÕES",
+      "NENHUMA",
+      "NENHUM",
+    ];
+
+    if (valoresIgnorados.includes(normalizado)) {
+      return "";
+    }
+
+    return texto;
+  }
+
+  function respostaEhObservacao(resposta: LinhaBanco) {
+    const pergunta = normalizarTexto(resposta.pergunta);
+
+    return (
+      pergunta.includes("OBS") ||
+      pergunta.includes("OBSERV") ||
+      pergunta.includes("COMENT") ||
+      pergunta.includes("ANOT")
+    );
+  }
+
+  function obterObservacoesRelatorio(vistoria: LinhaBanco, checklist: LinhaBanco[]) {
+    const camposObservacao = [
+      "observacoes",
+      "observacao",
+      "observações",
+      "observação",
+      "obs",
+      "observacoes_gerais",
+      "observacao_geral",
+      "observacoesGerais",
+      "observacaoGeral",
+      "comentario",
+      "comentarios",
+      "comentário",
+      "comentários",
+      "comentario_geral",
+      "comentarios_gerais",
+      "nota",
+      "notas",
+      "anotacao",
+      "anotacoes",
+      "anotação",
+      "anotações",
+      "descricao_observacao",
+      "descricaoObservacao",
+    ];
+
+    const observacaoDaVistoria = textoObservacaoValido(
+      pegarCampo(vistoria, camposObservacao)
+    );
+
+    if (observacaoDaVistoria) {
+      return observacaoDaVistoria;
+    }
+
+    for (const resposta of checklist) {
+      if (!respostaEhObservacao(resposta)) continue;
+
+      const detalhe = textoObservacaoValido(resposta.detalhe);
+      if (detalhe) return detalhe;
+
+      const respostaExibida = textoObservacaoValido(obterRespostaExibida(resposta));
+      if (respostaExibida) return respostaExibida;
+    }
+
+    return "";
+  }
+
   function obterFotosDaVistoriaParaRelatorio(vistoria: LinhaBanco) {
     return obterFotosComFallback(vistoria, fotos);
   }
@@ -5579,21 +5670,48 @@ export default function Home() {
       }
     }
 
-    const alturaPagina = doc.internal.pageSize.getHeight();
-    const alturaObservacao = 38;
-    const espacoDisponivel = alturaPagina - 54 - posicaoY;
+    const observacoesRelatorio = obterObservacoesRelatorio(vistoria, checklist);
+    const textoObservacoesPdf = observacoesRelatorio || "Sem observações anotadas.";
+    const linhasObservacoes = doc.splitTextToSize(
+      textoObservacoesPdf,
+      larguraTotal - 18
+    ) as string[];
+    const alturaObservacao = Math.max(38, linhasObservacoes.length * 9 + 28);
 
-    if (espacoDisponivel >= alturaObservacao + 6) {
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(7.8);
-      doc.setTextColor(127, 29, 29);
-      doc.text("Observações", margemX, posicaoY + 2);
+    posicaoY = garantirEspacoNoPdf(doc, posicaoY, alturaObservacao + 8);
 
-      doc.setFillColor(255, 255, 255);
-      doc.setDrawColor(225, 225, 225);
-      doc.roundedRect(margemX, posicaoY + 7, larguraTotal, alturaObservacao - 10, 4, 4, "FD");
-      posicaoY += alturaObservacao;
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(7.8);
+    doc.setTextColor(127, 29, 29);
+    doc.text("Observações", margemX, posicaoY + 2);
+
+    doc.setFillColor(255, 255, 255);
+    doc.setDrawColor(225, 225, 225);
+    doc.roundedRect(
+      margemX,
+      posicaoY + 7,
+      larguraTotal,
+      alturaObservacao - 10,
+      4,
+      4,
+      "FD"
+    );
+
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(7.3);
+    doc.setTextColor(
+      observacoesRelatorio ? 39 : 120,
+      observacoesRelatorio ? 39 : 120,
+      observacoesRelatorio ? 42 : 120
+    );
+
+    let observacaoLinhaY = posicaoY + 23;
+    for (const linhaObservacao of linhasObservacoes) {
+      doc.text(linhaObservacao, margemX + 8, observacaoLinhaY);
+      observacaoLinhaY += 9;
     }
+
+    posicaoY += alturaObservacao;
 
     posicaoY += 8;
     return posicaoY;
